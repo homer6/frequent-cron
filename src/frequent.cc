@@ -4,97 +4,158 @@
 #include <stdio.h>
 #include <iostream>
 #include <string>
+#include <stdlib.h>
 
 #include <boost/program_options.hpp>
+#include <boost/asio.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+//#include <boost/thread.hpp>
 
 
 #define USE(x) (x) = (x)
 
 using namespace std;
-namespace program_options = boost::program_options;
+
+static void timer_callback( const boost::system::error_code& e );
+static void call_again();
+
+static string shell_command;
+//static FILE *log_file;
+static boost::posix_time::time_duration frequency_in_ms;
+static boost::asio::deadline_timer *timer;
+static bool synchronous;
+
 
 int main( int argc, char** argv ){
 
-
-
     //handle the command line arguments
-        program_options::options_description desc("Options");
+        boost::program_options::options_description desc("Options");
         desc.add_options()
             ( "help", "produce help message" )
-            ( "frequency", program_options::value<int>(), "the timer frequency, in milliseconds" )
-            ( "command", program_options::value<string>(), "the shell command that the cron will run every frequency" )
+            ( "frequency", boost::program_options::value<int>(), "The timer frequency, in milliseconds." )
+            ( "command", boost::program_options::value<string>(), "The shell command that the cron will run every frequency." )
+            //( "log-filename", boost::program_options::value<string>(), "The filename of the log file." )
+            ( "synchronous", boost::program_options::value<string>()->implicit_value(""), "Whether calling the command blocks subsequent calls. Defaults to false." )
         ;
 
-        program_options::variables_map map;
-        program_options::store( program_options::parse_command_line(argc, argv, desc), map );
-        program_options::notify( map );
+        boost::program_options::variables_map variables_map;
+        boost::program_options::store( boost::program_options::parse_command_line(argc, argv, desc), variables_map );
+        boost::program_options::notify( variables_map );
 
-        if( map.count("help") ){
+        if( variables_map.count("help") ){
             cout << desc << "\n";
             return 1;
         }
 
-        if( map.count("frequency") ){
-            cout << "Frequency was set to " << map["frequency"].as<int>() << ".\n";
+        if( variables_map.count("frequency") ){
+            cout << "Frequency was set to " << variables_map["frequency"].as<int>() << ".\n";
         }else{
             cout << "Frequency was not set.\n";
+            return 1;
         }
 
-        return 0;
+        if( variables_map.count("command") ){
+            cout << "Command was set to " << variables_map["command"].as<string>() << ".\n";
+        }else{
+            cout << "Command was not set.\n";
+            return 1;
+        }
+
+        /*
+        string log_filename;
+        if( variables_map.count("log-filename") ){
+            log_filename = variables_map["log-filename"].as<string>();
+        }else{
+            log_filename = string("/tmp/console.log");
+        }
+        */
+
+        if( variables_map.count("synchronous") ){
+            synchronous = true;
+        }else{
+            synchronous = false;
+        }
 
 
+    //setup the program variables
+        int frequency = variables_map["frequency"].as<int>();
+        shell_command = variables_map["command"].as<string>();
 
-
-	//open log file
-		FILE *log_file;
-		unsigned loop_count = 0;
-		string log_filename( "/tmp/console.log" );
-		
-		log_file = fopen( log_filename.c_str(), "a" );
+    //open log file
+        /*
+        log_file = fopen( log_filename.c_str(), "a" );
 		if( log_file == NULL ){
             fprintf( stdout, "%s: Couldn't open log file %s\n", argv[0], log_filename.c_str() );
             return 1;
 		}
+        */
 
     //create a timer
-        /*
-        struct timeval current_time;
-        gettimeofday(&current_time, NULL);
-        float microtime = 0.0f;
+        boost::asio::io_service io_service;
+        frequency_in_ms = boost::posix_time::millisec(frequency);
+        timer = new boost::asio::deadline_timer( io_service, frequency_in_ms );
 
-        microtime = current_time.tv_sec;
-        microtime += current_time.tv_usec/1000; // the elapsed milliseconds over 1 second(1000 milliseconds);
-
-        time_t current_time;
-        current_time = time( NULL );
-        printf( "\tWall Clock): %ld\n", (long)current_time );
-        return 0;
-        */
-		
 	//start the service
-		if( daemon(0,0) == -1 ){
-			err( 1, NULL );
-		}
+        if( daemon(0,0) == -1 ){
+            err( 1, NULL );
+        }
 
-	//main service loop
-		while( 1 ){
-			
-			loop_count++;
-			
-            if( (loop_count % 1000) == 0 ){
-				fprintf( log_file, "Loop count is %i\n", loop_count );			
-			}
-			
-            /*if( loop_count == 100000 ){
-				break;
-			}
-            */
+    //register the initial timer callback and run the service
+        call_again();
+        io_service.run();
 		
-		}
-		
-	//cleanup allocated resources
-		fclose( log_file );
+    //cleanup allocated resources
+        //fclose( log_file );
+        delete timer;
 		
 	return 0;
 	
 }
+
+
+/**
+* This function is call every "frequency".
+*
+*
+*/
+static void timer_callback( const boost::system::error_code& error ){
+
+    if( error == boost::asio::error::operation_aborted ){
+        //std::cout << "Timer was canceled" << std::endl;
+        call_again();
+    }else if( error ){
+        //std::cout << "Timer error: " << error.message() << std::endl;
+    }else{
+        //std::cout << "Woof" << std::endl;
+        if( synchronous == false ){
+            call_again();
+        }
+        //fprintf( log_file, "Running command: %s\n", shell_command.c_str() );
+        //fflush( log_file );
+        system( shell_command.c_str() );
+        if( synchronous == true ){
+            call_again();
+        }
+    }
+
+}
+
+
+/**
+* This function is call every "frequency".
+*
+*
+*/
+static void call_again(){
+
+    //boost::thread thr1(cd);
+
+    //fprintf( log_file, "Registering Before...\n" );
+    //fflush( log_file );
+    timer->expires_from_now( frequency_in_ms );
+    timer->async_wait( timer_callback );
+    //fprintf( log_file, "Registering After...\n\n" );
+    //fflush( log_file );
+
+}
+

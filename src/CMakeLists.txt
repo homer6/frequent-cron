@@ -3,7 +3,7 @@ file(GLOB sources *.cc)
 add_executable( ../${CMAKE_PROJECT_NAME} ${sources} )
 
 
-find_package( Boost 1.43 COMPONENTS program_options REQUIRED )
+find_package( Boost 1.37 COMPONENTS system program_options REQUIRED )
 include_directories( ${Boost_INCLUDE_DIR} )
 target_link_libraries( ../${CMAKE_PROJECT_NAME} ${Boost_LIBRARIES} )
 

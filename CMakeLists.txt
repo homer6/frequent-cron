@@ -3,8 +3,6 @@ set(MAIN_EXECUTABLE frequent-cron)
 
 project(${MAIN_EXECUTABLE} CXX C)
 add_subdirectory(src)
-include_directories(lib)
-
 
 
 
