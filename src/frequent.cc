@@ -9,21 +9,19 @@
 #include <boost/program_options.hpp>
 #include <boost/asio.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-//#include <boost/thread.hpp>
 
-
-#define USE(x) (x) = (x)
 
 using namespace std;
 
 static void timer_callback( const boost::system::error_code& e );
-static void call_again();
+static void register_callback();
 
 static string shell_command;
 //static FILE *log_file;
 static boost::posix_time::time_duration frequency_in_ms;
 static boost::asio::deadline_timer *timer;
-static bool synchronous;
+//static bool synchronous;
+static boost::asio::io_service *io_service;
 
 
 int main( int argc, char** argv ){
@@ -35,7 +33,7 @@ int main( int argc, char** argv ){
             ( "frequency", boost::program_options::value<int>(), "The timer frequency, in milliseconds." )
             ( "command", boost::program_options::value<string>(), "The shell command that the cron will run every frequency." )
             //( "log-filename", boost::program_options::value<string>(), "The filename of the log file." )
-            ( "synchronous", boost::program_options::value<string>()->implicit_value(""), "Whether calling the command blocks subsequent calls. Defaults to false." )
+            //( "synchronous", boost::program_options::value<string>()->implicit_value(""), "Whether calling the command blocks subsequent calls. Defaults to false." )
         ;
 
         boost::program_options::variables_map variables_map;
@@ -68,13 +66,14 @@ int main( int argc, char** argv ){
         }else{
             log_filename = string("/tmp/console.log");
         }
-        */
+
 
         if( variables_map.count("synchronous") ){
             synchronous = true;
         }else{
             synchronous = false;
         }
+        */
 
 
     //setup the program variables
@@ -91,9 +90,9 @@ int main( int argc, char** argv ){
         */
 
     //create a timer
-        boost::asio::io_service io_service;
+        io_service = new boost::asio::io_service();
         frequency_in_ms = boost::posix_time::millisec(frequency);
-        timer = new boost::asio::deadline_timer( io_service, frequency_in_ms );
+        timer = new boost::asio::deadline_timer( *io_service, frequency_in_ms );
 
 	//start the service
         if( daemon(0,0) == -1 ){
@@ -101,12 +100,13 @@ int main( int argc, char** argv ){
         }
 
     //register the initial timer callback and run the service
-        call_again();
-        io_service.run();
+        register_callback();
+        io_service->run();
 		
     //cleanup allocated resources
         //fclose( log_file );
         delete timer;
+        delete io_service;
 		
 	return 0;
 	
@@ -122,20 +122,12 @@ static void timer_callback( const boost::system::error_code& error ){
 
     if( error == boost::asio::error::operation_aborted ){
         //std::cout << "Timer was canceled" << std::endl;
-        call_again();
+        register_callback();
     }else if( error ){
         //std::cout << "Timer error: " << error.message() << std::endl;
     }else{
-        //std::cout << "Woof" << std::endl;
-        if( synchronous == false ){
-            call_again();
-        }
-        //fprintf( log_file, "Running command: %s\n", shell_command.c_str() );
-        //fflush( log_file );
         system( shell_command.c_str() );
-        if( synchronous == true ){
-            call_again();
-        }
+        register_callback();
     }
 
 }
@@ -146,16 +138,10 @@ static void timer_callback( const boost::system::error_code& error ){
 *
 *
 */
-static void call_again(){
+static void register_callback(){
 
-    //boost::thread thr1(cd);
-
-    //fprintf( log_file, "Registering Before...\n" );
-    //fflush( log_file );
     timer->expires_from_now( frequency_in_ms );
     timer->async_wait( timer_callback );
-    //fprintf( log_file, "Registering After...\n\n" );
-    //fflush( log_file );
 
 }
 
