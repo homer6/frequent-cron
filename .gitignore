@@ -1,0 +1,15 @@
+CMakeCache.txt
+MakeCache.txt
+CMakeFiles/
+CTestTestfile.cmake
+Makefile
+cmake_install.cmake
+src/CMakeFiles/
+src/Makefile
+src/cmake_install.cmake
+src/libfrequent-cron.a
+tests/CMakeFiles/
+tests/Makefile
+tests/cmake_install.cmake
+frequent-cron
+src/frequent-cron.dir/

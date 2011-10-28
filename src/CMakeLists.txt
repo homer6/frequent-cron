@@ -1,5 +1,12 @@
 file(GLOB sources *.cc)
-add_library(${CMAKE_PROJECT_NAME} ${sources})
+#add_library(${CMAKE_PROJECT_NAME} ${sources})
+add_executable( ../${CMAKE_PROJECT_NAME} ${sources} )
+
+
+find_package( Boost 1.43 COMPONENTS program_options REQUIRED )
+include_directories( ${Boost_INCLUDE_DIR} )
+target_link_libraries( ../${CMAKE_PROJECT_NAME} ${Boost_LIBRARIES} )
+
 
 # Set default compile flags for GCC
 if(CMAKE_COMPILER_IS_GNUCXX)
