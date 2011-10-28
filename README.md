@@ -8,7 +8,8 @@ runs for 3 minutes, your script will run once every 3 minutes.
 Dependencies
 ------------
 
-  - Boost 1.37
+  - Boost 1.37 (apt-get install libboost-all-dev)
+  - cmake 2.8.2 (apt-get install cmake)
 
 
 Installation
