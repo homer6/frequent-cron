@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION "2.8.2")
+cmake_minimum_required(VERSION "2.8.0")
 set(MAIN_EXECUTABLE frequent-cron)
 
 project(${MAIN_EXECUTABLE} CXX C)
