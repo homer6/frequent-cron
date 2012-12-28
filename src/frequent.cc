@@ -1,4 +1,5 @@
 #include <sys/time.h>
+#include <sys/types.h>
 #include <unistd.h>
 #include <err.h>
 #include <stdio.h>
@@ -11,13 +12,17 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 
+
+
+
+
 using namespace std;
 
 static void timer_callback( const boost::system::error_code& e );
 static void register_callback();
 
 static string shell_command;
-//static FILE *log_file;
+static FILE *pid_file;
 static boost::posix_time::time_duration frequency_in_ms;
 static boost::asio::deadline_timer *timer;
 //static bool synchronous;
@@ -32,6 +37,7 @@ int main( int argc, char** argv ){
             ( "help", "produce help message" )
             ( "frequency", boost::program_options::value<int>(), "The timer frequency, in milliseconds." )
             ( "command", boost::program_options::value<string>(), "The shell command that the cron will run every frequency." )
+            ( "pid-file", boost::program_options::value<string>(), "The file that this daemon will write the process ID to. This is used for starting and stopping it as a service." )
             //( "log-filename", boost::program_options::value<string>(), "The filename of the log file." )
             //( "synchronous", boost::program_options::value<string>()->implicit_value(""), "Whether calling the command blocks subsequent calls. Defaults to false." )
         ;
@@ -59,6 +65,15 @@ int main( int argc, char** argv ){
             return 1;
         }
 
+        string pid_filename;
+        bool pid_file_set = false;
+        if( variables_map.count("pid-file") ){
+            pid_filename = variables_map["pid-file"].as<string>();
+            pid_file_set = true;
+            cout << "PID File was set to " << pid_filename << ".\n";
+        }
+
+
         /*
         string log_filename;
         if( variables_map.count("log-filename") ){
@@ -80,14 +95,7 @@ int main( int argc, char** argv ){
         int frequency = variables_map["frequency"].as<int>();
         shell_command = variables_map["command"].as<string>();
 
-    //open log file
-        /*
-        log_file = fopen( log_filename.c_str(), "a" );
-		if( log_file == NULL ){
-            fprintf( stdout, "%s: Couldn't open log file %s\n", argv[0], log_filename.c_str() );
-            return 1;
-		}
-        */
+
 
     //create a timer
         io_service = new boost::asio::io_service();
@@ -97,6 +105,18 @@ int main( int argc, char** argv ){
 	//start the service
         if( daemon(0,0) == -1 ){
             err( 1, NULL );
+        }
+
+    //open pid file
+        if( pid_file_set ){
+            pid_file = fopen( pid_filename.c_str(), "w+" );
+            if( pid_file == NULL ){
+                fprintf( stdout, "%s: Couldn't open log file %s\n", argv[0], pid_filename.c_str() );
+                return 1;
+            }else{
+                fprintf( pid_file, "%d", getpid() );
+                fclose( pid_file );
+            }
         }
 
     //register the initial timer callback and run the service
