@@ -8,7 +8,7 @@ runs for 3 minutes, your script will run once every 3 minutes.
 You can set `--synchronous=false` if you'd like frequent-cron to call your script asynchronously. Warning: running scripts
 asynchronously can cause unbounded resource growth if the script never exits or is called too frequently (eg. consuming
 too many database connections or too much memory). Synchronous (the default) is the safer path. So, just be aware that
-if you chose to run frequenty-cron asynchronously, you've been given enough rope to hang yourself.
+if you choose to run frequenty-cron asynchronously, you've been given enough rope to hang yourself.
 
 
 Dependencies
