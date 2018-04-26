@@ -1,8 +1,14 @@
 Overview
 ------------
 frequent-cron is a linux daemon under the MIT License. It is designed to run crons by millisecond in linux.
-Calls to the script or commands block, meaning that if you have a 500ms frequent-cron and your script
+
+By default, calls to the scripts or commands block, meaning that if you have a 500ms frequent-cron and your script
 runs for 3 minutes, your script will run once every 3 minutes.
+
+You can set `--synchronous=false` if you'd like frequent-cron to call your script asynchronously. Warning: running scripts
+asynchronously can cause unbounded resource growth if the script never exits or is called too frequently (eg. consuming
+too many database connections or too much memory). Synchronous (the default) is the safer path. So, just be aware that
+if you chose to run frequenty-cron asynchronously, you've been given enough rope to hang yourself.
 
 
 Dependencies
