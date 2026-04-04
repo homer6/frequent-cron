@@ -1,6 +1,6 @@
 # frequent-cron
 
-A lightweight daemon that executes shell commands at sub-second intervals. Standard cron only supports minute-level granularity -- frequent-cron supports millisecond precision. Runs on Linux and macOS.
+A lightweight daemon that executes shell commands at sub-second intervals. Standard cron only supports minute-level granularity -- frequent-cron supports millisecond precision. Runs on Linux, macOS, and Windows.
 
 By default, command execution is **blocking** (synchronous): if a command takes longer than the configured interval, the next execution waits until the previous one completes. For example, a 500ms interval with a command that takes 3 minutes will effectively run once every 3 minutes.
 
@@ -11,18 +11,11 @@ Licensed under the MIT License.
 
 ## Dependencies
 
-- [Boost](https://www.boost.org/) 1.37+
-- [CMake](https://cmake.org/) 3.5+
+- [Boost](https://www.boost.org/) 1.37+ (components: `asio`, `program_options`)
+- [CMake](https://cmake.org/) 3.14+
+- C++23 compiler
 
-**Linux (Debian/Ubuntu):**
-```bash
-sudo apt-get install libboost-system-dev libboost-program-options-dev cmake
-```
-
-**macOS (Homebrew):**
-```bash
-brew install boost cmake
-```
+See platform-specific install instructions in [docs/](docs/).
 
 
 ## Installation
@@ -32,6 +25,8 @@ git clone https://github.com/homer6/frequent-cron.git
 cd frequent-cron
 cmake .
 make
+make test
+sudo make install
 ```
 
 
@@ -50,21 +45,20 @@ make
 ### Running Directly
 
 ```bash
-./frequent-cron --frequency=1000 --command="/path/to/your/script.sh"
+./frequent-cron --frequency=1000 --command="/path/to/your/script.sh" --pid-file=/var/run/frequent-cron.pid
 ```
 
-To stop, find and kill the process:
+To stop:
 
 ```bash
-ps aux | grep frequent-cron
-kill <pid>
+kill $(cat /var/run/frequent-cron.pid)
 ```
 
 ### Running as a Service
 
 - **macOS**: See [docs/macos.md](docs/macos.md) for launchd setup.
 - **Ubuntu/Debian**: See [docs/ubuntu.md](docs/ubuntu.md) for init.d and systemd setup.
-- **Windows**: See [docs/windows.md](docs/windows.md) for NSSM service setup.
+- **Windows**: See [docs/windows.md](docs/windows.md) for Task Scheduler setup.
 - **Linux (init.d)**:
 
 1. Copy the template:

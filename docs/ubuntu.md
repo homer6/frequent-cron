@@ -13,12 +13,14 @@ git clone https://github.com/homer6/frequent-cron.git
 cd frequent-cron
 cmake .
 make
+make test
+sudo make install
 ```
 
 ## Running Directly
 
 ```bash
-./frequent-cron --frequency=1000 --command="/path/to/your/script.sh"
+./frequent-cron --frequency=1000 --command="/path/to/your/script.sh" --pid-file=/var/run/frequent-cron.pid
 ```
 
 ## Running as an init.d Service
