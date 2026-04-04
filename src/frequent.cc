@@ -1,17 +1,15 @@
-#include <sys/time.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <err.h>
 #include <stdio.h>
 #include <iostream>
 #include <string>
 #include <stdlib.h>
+#include <chrono>
 
 #include <boost/program_options.hpp>
 #include <boost/asio.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
-
-#include <sys/wait.h>
 
 
 
@@ -23,10 +21,10 @@ static void register_callback();
 
 static string shell_command;
 static FILE *pid_file;
-static boost::posix_time::time_duration frequency_in_ms;
-static boost::asio::deadline_timer *timer;
+static std::chrono::milliseconds frequency_in_ms;
+static boost::asio::steady_timer *timer;
 static bool synchronous;
-static boost::asio::io_service *io_service;
+static boost::asio::io_context *io_context_ptr;
 
 
 int main( int argc, char** argv ){
@@ -104,9 +102,9 @@ int main( int argc, char** argv ){
 
 
     //create a timer
-        io_service = new boost::asio::io_service();
-        frequency_in_ms = boost::posix_time::millisec(frequency);
-        timer = new boost::asio::deadline_timer( *io_service, frequency_in_ms );
+        io_context_ptr = new boost::asio::io_context();
+        frequency_in_ms = std::chrono::milliseconds(frequency);
+        timer = new boost::asio::steady_timer( *io_context_ptr, frequency_in_ms );
 
 	//start the service
         if( daemon(0,0) == -1 ){
@@ -127,12 +125,11 @@ int main( int argc, char** argv ){
 
     //register the initial timer callback and run the service
         register_callback();
-        io_service->run();
+        io_context_ptr->run();
 		
     //cleanup allocated resources
-        //fclose( log_file );
         delete timer;
-        delete io_service;
+        delete io_context_ptr;
 		
 	return 0;
 	
@@ -196,7 +193,7 @@ static void timer_callback( const boost::system::error_code& error ){
 */
 static void register_callback(){
 
-    timer->expires_from_now( frequency_in_ms );
+    timer->expires_after( frequency_in_ms );
     timer->async_wait( timer_callback );
 
 }

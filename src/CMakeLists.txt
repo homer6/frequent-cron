@@ -1,11 +1,11 @@
 file(GLOB sources *.cc)
-#add_library(${CMAKE_PROJECT_NAME} ${sources})
-add_executable( ../${CMAKE_PROJECT_NAME} ${sources} )
+add_executable( ${CMAKE_PROJECT_NAME} ${sources} )
 
+set_target_properties( ${CMAKE_PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR} )
 
-find_package( Boost 1.37 COMPONENTS system program_options REQUIRED )
+find_package( Boost 1.37 COMPONENTS program_options REQUIRED )
 include_directories( ${Boost_INCLUDE_DIR} )
-target_link_libraries( ../${CMAKE_PROJECT_NAME} ${Boost_LIBRARIES} )
+target_link_libraries( ${CMAKE_PROJECT_NAME} ${Boost_LIBRARIES} )
 
 
 # Set default compile flags for GCC
