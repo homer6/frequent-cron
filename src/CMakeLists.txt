@@ -1,7 +1,11 @@
 file(GLOB sources *.cc)
 add_executable( ${CMAKE_PROJECT_NAME} ${sources} )
 
-set_target_properties( ${CMAKE_PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR} )
+set_target_properties( ${CMAKE_PROJECT_NAME} PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}
+    RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR}
+    RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_SOURCE_DIR}
+)
 
 find_package( Boost 1.37 COMPONENTS program_options REQUIRED )
 include_directories( ${Boost_INCLUDE_DIR} )

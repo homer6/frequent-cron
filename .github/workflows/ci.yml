@@ -34,3 +34,19 @@ jobs:
 
       - name: Test
         run: make test ARGS="--output-on-failure"
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Boost
+        run: vcpkg install boost-asio boost-program-options
+
+      - name: Build
+        run: |
+          cmake . -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
+          cmake --build . --config Release
+
+      - name: Test
+        run: powershell -ExecutionPolicy Bypass -File tests/test_frequent_cron.ps1 -Binary .\frequent-cron.exe

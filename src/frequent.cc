@@ -1,6 +1,13 @@
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
+#ifdef _WIN32
+    #include <process.h>
+    #include <io.h>
+    #include <windows.h>
+#else
+    #include <sys/types.h>
+    #include <sys/wait.h>
+    #include <unistd.h>
+#endif
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -33,6 +40,12 @@ static void timer_callback( const boost::system::error_code& error ){
             register_callback();
         }else{
 
+#ifdef _WIN32
+            // On Windows, use cmd /c start to launch async
+            register_callback();
+            std::string async_cmd = "cmd /c start /b " + shell_command;
+            system( async_cmd.c_str() );
+#else
             register_callback();
 
             pid_t fork_result = fork();
@@ -47,6 +60,7 @@ static void timer_callback( const boost::system::error_code& error ){
                 waitpid(-1, &status, WNOHANG | WUNTRACED | WCONTINUED);
                 waitpid(-1, &status, WNOHANG | WUNTRACED | WCONTINUED);
             }
+#endif
 
         }
 
@@ -126,20 +140,41 @@ int main( int argc, char** argv ){
     frequency_in_ms = std::chrono::milliseconds(frequency);
     timer = std::make_shared<boost::asio::steady_timer>( *io_context_ptr, frequency_in_ms );
 
-    // start the service
-    if( daemon(0, 0) == -1 ){
-        perror("daemon");
+    // daemonize on POSIX, run in foreground on Windows
+#ifdef _WIN32
+    // On Windows, run in foreground (use Task Scheduler for service behavior)
+#else
+    // fork and run in background
+    pid_t fork_result = fork();
+    if( fork_result < 0 ){
+        perror("fork");
         return 1;
     }
+    if( fork_result > 0 ){
+        // parent exits
+        _exit(0);
+    }
+    // child continues as daemon
+    setsid();
+    chdir("/");
+    close(STDIN_FILENO);
+    close(STDOUT_FILENO);
+    close(STDERR_FILENO);
+#endif
 
     // write pid file
     if( pid_file_set ){
+#ifdef _WIN32
+        int pid = _getpid();
+#else
+        pid_t pid = getpid();
+#endif
         std::ofstream pid_file( pid_filename );
         if( !pid_file ){
             std::cerr << "frequent-cron: couldn't open pid file " << pid_filename << "\n";
             return 1;
         }
-        pid_file << getpid();
+        pid_file << pid;
     }
 
     // register the initial timer callback and run the service
