@@ -7,6 +7,8 @@ find_package( Boost 1.37 COMPONENTS program_options REQUIRED )
 include_directories( ${Boost_INCLUDE_DIR} )
 target_link_libraries( ${CMAKE_PROJECT_NAME} ${Boost_LIBRARIES} )
 
+install( TARGETS ${CMAKE_PROJECT_NAME} DESTINATION bin )
+
 
 # Set default compile flags for GCC
 if(CMAKE_COMPILER_IS_GNUCXX)

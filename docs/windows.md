@@ -32,26 +32,19 @@ cmake --build . --config Release
 
 ## Running as a Windows Service
 
-You can use [NSSM](https://nssm.cc/) (Non-Sucking Service Manager) to run frequent-cron as a Windows service:
+You can use Windows Task Scheduler to run frequent-cron at startup:
 
-1. Download and install NSSM.
+1. Open Task Scheduler and create a new task.
+2. Under **General**, select "Run whether user is logged on or not".
+3. Under **Triggers**, add a trigger for "At startup".
+4. Under **Actions**, add an action:
+   - Program: `C:\path\to\frequent-cron.exe`
+   - Arguments: `--frequency=1000 --command=C:\path\to\your\script.bat`
+5. Under **Settings**, uncheck "Stop the task if it runs longer than".
 
-2. Install the service:
-   ```powershell
-   nssm install frequent-cron "C:\path\to\frequent-cron.exe" "--frequency=1000 --command=C:\path\to\your\script.bat"
-   ```
-
-3. Start the service:
-   ```powershell
-   nssm start frequent-cron
-   ```
-
-4. To stop:
-   ```powershell
-   nssm stop frequent-cron
-   ```
+Alternatively, use `sc.exe` to register a native Windows service if you wrap frequent-cron with a service host.
 
 ## Notes
 
-- The `daemon()` call used on Linux/macOS is not available on Windows. The daemon functionality is handled by running as a Windows service via NSSM.
+- The `daemon()` call used on Linux/macOS is not available on Windows. Use Task Scheduler or a service wrapper instead.
 - The `fork()` call used for async mode is not available on Windows. Async mode (`--synchronous=false`) is not currently supported on Windows.

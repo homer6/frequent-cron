@@ -5,11 +5,8 @@ project(${MAIN_EXECUTABLE} CXX C)
 set(CMAKE_CXX_STANDARD 23)
 add_subdirectory(src)
 
-
-
-#add_subdirectory(tests EXCLUDE_FROM_ALL)
-#set(PROJECT_TESTS ${CMAKE_PROJECT_NAME}_tests)
-#enable_testing()
-#add_test(tests/${PROJECT_TESTS} tests/${PROJECT_TESTS})
-#add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure)
-#add_dependencies(check  ${PROJECT_TESTS})
+enable_testing()
+add_test(NAME integration_tests
+    COMMAND bash ${CMAKE_SOURCE_DIR}/tests/test_frequent_cron.sh ${CMAKE_SOURCE_DIR}/frequent-cron
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)

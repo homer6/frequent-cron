@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y libboost-system-dev libboost-program-options-dev cmake
+
+      - name: Build
+        run: cmake . && make
+
+      - name: Test
+        run: make test ARGS="--output-on-failure"
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: brew install boost cmake
+
+      - name: Build
+        run: cmake . && make
+
+      - name: Test
+        run: make test ARGS="--output-on-failure"
