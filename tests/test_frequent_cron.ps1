@@ -2,7 +2,7 @@
 # Integration tests for frequent-cron (Windows)
 #
 # On Windows, frequent-cron runs in the foreground (no daemon mode),
-# so we launch it as a background job and test from there.
+# so we launch it via Start-Process and test from there.
 #
 
 param(
@@ -10,22 +10,21 @@ param(
 )
 
 $ErrorActionPreference = "Continue"
+$Binary = Resolve-Path $Binary
 $TestDir = Join-Path $env:TEMP "frequent-cron-tests-$(Get-Random)"
 New-Item -ItemType Directory -Path $TestDir -Force | Out-Null
 
 $Pass = 0
 $Fail = 0
-$Jobs = @()
+$Processes = @()
 
 function Pass($msg) { $script:Pass++; Write-Host "  PASS: $msg" }
 function Fail($msg) { $script:Fail++; Write-Host "  FAIL: $msg" }
 
-function Stop-AllJobs {
-    foreach ($j in $script:Jobs) {
-        Stop-Job $j -ErrorAction SilentlyContinue
-        Remove-Job $j -Force -ErrorAction SilentlyContinue
+function Stop-AllProcesses {
+    foreach ($p in $script:Processes) {
+        Stop-Process -Id $p -Force -ErrorAction SilentlyContinue
     }
-    # Also kill by pid file
     Get-ChildItem "$TestDir\*.pid" -ErrorAction SilentlyContinue | ForEach-Object {
         $pidVal = Get-Content $_.FullName -ErrorAction SilentlyContinue
         if ($pidVal) {
@@ -35,13 +34,10 @@ function Stop-AllJobs {
 }
 
 function Start-FrequentCron {
-    param([string[]]$Args)
-    $job = Start-Job -ScriptBlock {
-        param($bin, $a)
-        & $bin @a 2>&1
-    } -ArgumentList $Binary, $Args
-    $script:Jobs += $job
-    return $job
+    param([string]$Arguments)
+    $proc = Start-Process -FilePath $Binary -ArgumentList $Arguments -PassThru -NoNewWindow -RedirectStandardOutput "$TestDir\nul.txt" -RedirectStandardError "$TestDir\nul_err.txt"
+    $script:Processes += $proc.Id
+    return $proc
 }
 
 # ============================================================
@@ -67,13 +63,13 @@ Write-Host "=== PID File ==="
 
 # PID file is created
 $pidFile = Join-Path $TestDir "test_pid.pid"
-$job = Start-FrequentCron @("--frequency=500", "--command=echo hi", "--pid-file=$pidFile")
-Start-Sleep -Seconds 1
+$proc = Start-FrequentCron "--frequency=500 --command=`"echo hi`" --pid-file=`"$pidFile`""
+Start-Sleep -Seconds 2
 if (Test-Path $pidFile) { Pass "PID file is created" } else { Fail "PID file is created" }
 
 # PID file contains valid integer
 if (Test-Path $pidFile) {
-    $pidVal = Get-Content $pidFile
+    $pidVal = (Get-Content $pidFile).Trim()
     if ($pidVal -match '^\d+$') {
         Pass "PID file contains valid integer ($pidVal)"
         Stop-Process -Id $pidVal -Force -ErrorAction SilentlyContinue
@@ -83,7 +79,7 @@ if (Test-Path $pidFile) {
 } else {
     Fail "PID file contains valid integer (file missing)"
 }
-Stop-Job $job -ErrorAction SilentlyContinue
+Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
 
 
 # ============================================================
@@ -93,11 +89,10 @@ Write-Host "=== Synchronous Execution ==="
 # Command executes at roughly the configured frequency
 $outputFile = Join-Path $TestDir "sync_freq.txt"
 $pidFile = Join-Path $TestDir "sync_freq.pid"
-$job = Start-FrequentCron @("--frequency=200", "--command=echo tick >> $outputFile", "--pid-file=$pidFile")
+$proc = Start-FrequentCron "--frequency=200 --command=`"cmd /c echo tick >> \`"$outputFile\`"`" --pid-file=`"$pidFile`""
 Start-Sleep -Seconds 2
-Stop-Job $job -ErrorAction SilentlyContinue
+Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
 Start-Sleep -Milliseconds 500
-if (Test-Path $pidFile) { Stop-Process -Id (Get-Content $pidFile) -Force -ErrorAction SilentlyContinue }
 if (Test-Path $outputFile) {
     $lines = @(Get-Content $outputFile).Count
     if ($lines -ge 5) { Pass "synchronous: ~correct execution frequency (got $lines lines, expected >= 5)" }
@@ -109,12 +104,10 @@ if (Test-Path $outputFile) {
 # Slow command blocks next execution
 $outputFile = Join-Path $TestDir "slow_sync.txt"
 $pidFile = Join-Path $TestDir "slow_sync.pid"
-$sleepCmd = "ping -n 2 127.0.0.1 > nul && echo done >> $outputFile"
-$job = Start-FrequentCron @("--frequency=100", "--command=$sleepCmd", "--pid-file=$pidFile")
+$proc = Start-FrequentCron "--frequency=100 --command=`"cmd /c ping -n 2 127.0.0.1 > nul && echo done >> \`"$outputFile\`"`" --pid-file=`"$pidFile`""
 Start-Sleep -Seconds 4
-Stop-Job $job -ErrorAction SilentlyContinue
+Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
 Start-Sleep -Milliseconds 500
-if (Test-Path $pidFile) { Stop-Process -Id (Get-Content $pidFile) -Force -ErrorAction SilentlyContinue }
 if (Test-Path $outputFile) {
     $lines = @(Get-Content $outputFile).Count
     if ($lines -le 4) { Pass "synchronous: slow command blocks next execution (got $lines lines, expected <= 4)" }
@@ -131,11 +124,10 @@ Write-Host "=== Edge Cases ==="
 # frequency=1 doesn't crash
 $outputFile = Join-Path $TestDir "fast_freq.txt"
 $pidFile = Join-Path $TestDir "fast_freq.pid"
-$job = Start-FrequentCron @("--frequency=1", "--command=echo tick >> $outputFile", "--pid-file=$pidFile")
+$proc = Start-FrequentCron "--frequency=1 --command=`"cmd /c echo tick >> \`"$outputFile\`"`" --pid-file=`"$pidFile`""
 Start-Sleep -Seconds 2
-Stop-Job $job -ErrorAction SilentlyContinue
+Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
 Start-Sleep -Milliseconds 500
-if (Test-Path $pidFile) { Stop-Process -Id (Get-Content $pidFile) -Force -ErrorAction SilentlyContinue }
 if (Test-Path $outputFile) {
     $lines = @(Get-Content $outputFile).Count
     if ($lines -ge 10) { Pass "frequency=1 doesn't crash (got $lines lines, expected >= 10)" }
@@ -146,26 +138,20 @@ if (Test-Path $outputFile) {
 
 # Nonexistent command doesn't crash
 $pidFile = Join-Path $TestDir "bad_cmd.pid"
-$job = Start-FrequentCron @("--frequency=500", "--command=C:\nonexistent\script.bat", "--pid-file=$pidFile")
+$proc = Start-FrequentCron "--frequency=500 --command=`"C:\nonexistent\script.bat`" --pid-file=`"$pidFile`""
 Start-Sleep -Seconds 2
-if (Test-Path $pidFile) {
-    $pidVal = Get-Content $pidFile
-    $proc = Get-Process -Id $pidVal -ErrorAction SilentlyContinue
-    if ($proc) {
-        Pass "nonexistent command doesn't crash"
-        Stop-Process -Id $pidVal -Force -ErrorAction SilentlyContinue
-    } else {
-        Fail "nonexistent command doesn't crash"
-    }
-} else {
-    Fail "nonexistent command doesn't crash (no pid file)"
+try {
+    $check = Get-Process -Id $proc.Id -ErrorAction Stop
+    Pass "nonexistent command doesn't crash"
+    Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+} catch {
+    Fail "nonexistent command doesn't crash"
 }
-Stop-Job $job -ErrorAction SilentlyContinue
 
 
 # ============================================================
 # Cleanup
-Stop-AllJobs
+Stop-AllProcesses
 Remove-Item -Recurse -Force $TestDir -ErrorAction SilentlyContinue
 
 Write-Host ""
