@@ -1,6 +1,6 @@
 # frequent-cron
 
-A lightweight Linux daemon that executes shell commands at sub-second intervals. Standard cron only supports minute-level granularity -- frequent-cron supports millisecond precision.
+A lightweight daemon that executes shell commands at sub-second intervals. Standard cron only supports minute-level granularity -- frequent-cron supports millisecond precision. Runs on Linux and macOS.
 
 By default, command execution is **blocking** (synchronous): if a command takes longer than the configured interval, the next execution waits until the previous one completes. For example, a 500ms interval with a command that takes 3 minutes will effectively run once every 3 minutes.
 
@@ -11,8 +11,18 @@ Licensed under the MIT License.
 
 ## Dependencies
 
-- [Boost](https://www.boost.org/) 1.37+ (`sudo apt-get install libboost-system-dev libboost-program-options-dev`)
-- [CMake](https://cmake.org/) 2.8.2+ (`sudo apt-get install cmake`)
+- [Boost](https://www.boost.org/) 1.37+
+- [CMake](https://cmake.org/) 3.5+
+
+**Linux (Debian/Ubuntu):**
+```bash
+sudo apt-get install libboost-system-dev libboost-program-options-dev cmake
+```
+
+**macOS (Homebrew):**
+```bash
+brew install boost cmake
+```
 
 
 ## Installation
@@ -50,7 +60,12 @@ ps aux | grep frequent-cron
 kill <pid>
 ```
 
-### Running as an init.d Service
+### Running as a Service
+
+- **macOS**: See [docs/macos.md](docs/macos.md) for launchd setup.
+- **Ubuntu/Debian**: See [docs/ubuntu.md](docs/ubuntu.md) for init.d and systemd setup.
+- **Windows**: See [docs/windows.md](docs/windows.md) for NSSM service setup.
+- **Linux (init.d)**:
 
 1. Copy the template:
    ```bash
