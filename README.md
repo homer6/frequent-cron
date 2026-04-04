@@ -2,7 +2,9 @@
 
 A lightweight Linux daemon that executes shell commands at sub-second intervals. Standard cron only supports minute-level granularity -- frequent-cron supports millisecond precision.
 
-Command execution is **blocking**: if a command takes longer than the configured interval, the next execution waits until the previous one completes. For example, a 500ms interval with a command that takes 3 minutes will effectively run once every 3 minutes.
+By default, command execution is **blocking** (synchronous): if a command takes longer than the configured interval, the next execution waits until the previous one completes. For example, a 500ms interval with a command that takes 3 minutes will effectively run once every 3 minutes.
+
+You can set `--synchronous=false` to run commands asynchronously. Warning: running asynchronously can cause unbounded resource growth if the script never exits or is called too frequently (e.g. consuming too many database connections or too much memory). Synchronous (the default) is the safer option.
 
 Licensed under the MIT License.
 
@@ -32,6 +34,7 @@ make
 | `--frequency` | Interval in milliseconds between command executions |
 | `--command` | Shell command to execute |
 | `--pid-file` | Path to write the daemon's PID (optional) |
+| `--synchronous` | Set to `false` for async execution (default: `true`) |
 | `--help` | Display help |
 
 ### Running Directly

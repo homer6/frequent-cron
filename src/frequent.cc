@@ -11,7 +11,7 @@
 #include <boost/asio.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-
+#include <sys/wait.h>
 
 
 
@@ -25,7 +25,7 @@ static string shell_command;
 static FILE *pid_file;
 static boost::posix_time::time_duration frequency_in_ms;
 static boost::asio::deadline_timer *timer;
-//static bool synchronous;
+static bool synchronous;
 static boost::asio::io_service *io_service;
 
 
@@ -39,7 +39,7 @@ int main( int argc, char** argv ){
             ( "command", boost::program_options::value<string>(), "The shell command that the cron will run every frequency." )
             ( "pid-file", boost::program_options::value<string>(), "The file that this daemon will write the process ID to. This is used for starting and stopping it as a service." )
             //( "log-filename", boost::program_options::value<string>(), "The filename of the log file." )
-            //( "synchronous", boost::program_options::value<string>()->implicit_value(""), "Whether calling the command blocks subsequent calls. Defaults to false." )
+            ( "synchronous", boost::program_options::value<string>()->implicit_value("true"), "Whether calling the command blocks subsequent calls. Defaults to true." )
         ;
 
         boost::program_options::variables_map variables_map;
@@ -65,6 +65,19 @@ int main( int argc, char** argv ){
             return 1;
         }
 
+        synchronous = true;
+        if( variables_map.count("synchronous") ){
+            string synchronous_str = variables_map["synchronous"].as<string>();            
+            if( synchronous_str != "true" && synchronous_str != "True" && synchronous_str != "TRUE" && synchronous_str != "1" ){
+                synchronous = false;
+                cout << "Synchronous was set to false.\n";
+            }else{
+                cout << "Synchronous was set to true.\n";
+            }
+        }else{
+            cout << "Synchronous was not set (defaults to true).\n";
+        }
+
         string pid_filename;
         bool pid_file_set = false;
         if( variables_map.count("pid-file") ){
@@ -82,19 +95,12 @@ int main( int argc, char** argv ){
             log_filename = string("/tmp/console.log");
         }
 
-
-        if( variables_map.count("synchronous") ){
-            synchronous = true;
-        }else{
-            synchronous = false;
-        }
         */
 
 
     //setup the program variables
         int frequency = variables_map["frequency"].as<int>();
         shell_command = variables_map["command"].as<string>();
-
 
 
     //create a timer
@@ -146,8 +152,38 @@ static void timer_callback( const boost::system::error_code& error ){
     }else if( error ){
         //std::cout << "Timer error: " << error.message() << std::endl;
     }else{
-        system( shell_command.c_str() );
-        register_callback();
+
+        if( synchronous ){
+            system( shell_command.c_str() );
+            register_callback();
+        }else{
+
+            register_callback();
+
+            pid_t fork_result = fork();
+
+            if( fork_result == 0 ){
+                //child
+                system( shell_command.c_str() );
+                exit(0);
+
+            }else if( fork_result == -1 ){
+                //fork error
+                std::cerr << "Frequent-cron: failed to execute fork." << std::endl;
+
+            }else{
+                //parent
+                //clear up old zombie processes
+                int status;
+                waitpid(-1, &status, WNOHANG | WUNTRACED | WCONTINUED );
+                waitpid(-1, &status, WNOHANG | WUNTRACED | WCONTINUED );
+
+            }
+
+
+
+        }
+
     }
 
 }
