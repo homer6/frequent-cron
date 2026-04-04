@@ -1,5 +1,18 @@
-file(GLOB sources *.cc)
-add_executable( ${CMAKE_PROJECT_NAME} ${sources} )
+# Library (everything except main)
+add_library( ${CMAKE_PROJECT_NAME}_lib STATIC
+    config.cc
+    executor.cc
+    pid_file.cc
+    daemonize.cc
+)
+
+find_package( Boost 1.37 COMPONENTS program_options REQUIRED )
+target_include_directories( ${CMAKE_PROJECT_NAME}_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${Boost_INCLUDE_DIR} )
+target_link_libraries( ${CMAKE_PROJECT_NAME}_lib PUBLIC ${Boost_LIBRARIES} )
+
+# Executable
+add_executable( ${CMAKE_PROJECT_NAME} main.cc )
+target_link_libraries( ${CMAKE_PROJECT_NAME} ${CMAKE_PROJECT_NAME}_lib )
 
 set_target_properties( ${CMAKE_PROJECT_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -7,12 +20,7 @@ set_target_properties( ${CMAKE_PROJECT_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_SOURCE_DIR}
 )
 
-find_package( Boost 1.37 COMPONENTS program_options REQUIRED )
-include_directories( ${Boost_INCLUDE_DIR} )
-target_link_libraries( ${CMAKE_PROJECT_NAME} ${Boost_LIBRARIES} )
-
 install( TARGETS ${CMAKE_PROJECT_NAME} DESTINATION bin )
-
 
 # Set default compile flags for GCC
 if(CMAKE_COMPILER_IS_GNUCXX)

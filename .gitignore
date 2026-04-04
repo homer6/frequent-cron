@@ -3,16 +3,36 @@ CMakeCache.txt
 CMakeFiles/
 Makefile
 cmake_install.cmake
+CTestTestfile.cmake
 Testing/
 frequent-cron
+frequent-cron.exe
+
+# Library artifacts
+*.a
+*.lib
 
 # Subdirectory build artifacts
 src/CMakeFiles/
 src/Makefile
 src/cmake_install.cmake
-src/libfrequent-cron.a
 src/frequent-cron.dir/
 tests/CMakeFiles/
 tests/Makefile
 tests/cmake_install.cmake
-CTestTestfile.cmake
+
+# GTest / FetchContent
+_deps/
+lib/
+bin/
+googletest-prefix/
+
+# Test binaries
+tests/test_config
+tests/test_pid_file
+tests/test_executor
+
+# GTest discovery artifacts
+tests/cmake_test_discovery_*.json
+tests/*_include.cmake
+tests/*_tests.cmake

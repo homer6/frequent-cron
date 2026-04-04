@@ -1,19 +1,20 @@
-cmake_minimum_required(VERSION "3.5")
+cmake_minimum_required(VERSION "3.14")
 set(MAIN_EXECUTABLE frequent-cron)
 
 project(${MAIN_EXECUTABLE} CXX C)
 set(CMAKE_CXX_STANDARD 23)
 add_subdirectory(src)
 
+# Testing
 enable_testing()
-if(WIN32)
-    add_test(NAME integration_tests
-        COMMAND powershell -ExecutionPolicy Bypass -File ${CMAKE_SOURCE_DIR}/tests/test_frequent_cron.ps1 -Binary ${CMAKE_SOURCE_DIR}/frequent-cron.exe
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    )
-else()
-    add_test(NAME integration_tests
-        COMMAND bash ${CMAKE_SOURCE_DIR}/tests/test_frequent_cron.sh ${CMAKE_SOURCE_DIR}/frequent-cron
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    )
-endif()
+
+include(FetchContent)
+FetchContent_Declare(
+    googletest
+    URL https://github.com/google/googletest/archive/refs/tags/v1.15.2.tar.gz
+)
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+
+include(GoogleTest)
+add_subdirectory(tests)

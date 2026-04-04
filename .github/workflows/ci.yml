@@ -16,7 +16,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libboost-system-dev libboost-program-options-dev cmake
 
       - name: Build
-        run: cmake . && make
+        run: cmake . && make -j$(nproc)
 
       - name: Test
         run: make test ARGS="--output-on-failure"
@@ -30,7 +30,7 @@ jobs:
         run: brew install boost cmake
 
       - name: Build
-        run: cmake . && make
+        run: cmake . && make -j$(sysctl -n hw.ncpu)
 
       - name: Test
         run: make test ARGS="--output-on-failure"
@@ -49,4 +49,4 @@ jobs:
           cmake --build . --config Release
 
       - name: Test
-        run: powershell -ExecutionPolicy Bypass -File tests/test_frequent_cron.ps1 -Binary .\frequent-cron.exe
+        run: ctest --test-dir . --output-on-failure -C Release
