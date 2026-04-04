@@ -31,6 +31,8 @@ googletest-prefix/
 tests/test_config
 tests/test_pid_file
 tests/test_executor
+tests/test_data_dir
+tests/test_database
 
 # GTest discovery artifacts
 tests/cmake_test_discovery_*.json

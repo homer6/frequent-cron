@@ -10,6 +10,14 @@ add_executable( test_executor test_executor.cc )
 target_link_libraries( test_executor ${CMAKE_PROJECT_NAME}_lib GTest::gtest_main )
 gtest_discover_tests( test_executor )
 
+add_executable( test_data_dir test_data_dir.cc )
+target_link_libraries( test_data_dir ${CMAKE_PROJECT_NAME}_lib GTest::gtest_main )
+gtest_discover_tests( test_data_dir )
+
+add_executable( test_database test_database.cc )
+target_link_libraries( test_database ${CMAKE_PROJECT_NAME}_lib GTest::gtest_main )
+gtest_discover_tests( test_database )
+
 # Integration tests (shell-based)
 if(WIN32)
     add_test(NAME integration_tests
