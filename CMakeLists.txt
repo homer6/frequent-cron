@@ -1,15 +1,20 @@
-cmake_minimum_required(VERSION "3.5")
+cmake_minimum_required(VERSION "3.14")
 set(MAIN_EXECUTABLE frequent-cron)
 
 project(${MAIN_EXECUTABLE} CXX C)
 set(CMAKE_CXX_STANDARD 23)
 add_subdirectory(src)
 
+# Testing
+enable_testing()
 
+include(FetchContent)
+FetchContent_Declare(
+    googletest
+    URL https://github.com/google/googletest/archive/refs/tags/v1.15.2.tar.gz
+)
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
 
-#add_subdirectory(tests EXCLUDE_FROM_ALL)
-#set(PROJECT_TESTS ${CMAKE_PROJECT_NAME}_tests)
-#enable_testing()
-#add_test(tests/${PROJECT_TESTS} tests/${PROJECT_TESTS})
-#add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure)
-#add_dependencies(check  ${PROJECT_TESTS})
+include(GoogleTest)
+add_subdirectory(tests)

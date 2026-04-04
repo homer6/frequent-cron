@@ -1,17 +1,24 @@
-set(PROJECT_TESTS ${CMAKE_PROJECT_NAME}_tests)
-include_directories(${${CMAKE_PROJECT_NAME}_SOURCE_DIR}/src)
+add_executable( test_config test_config.cc )
+target_link_libraries( test_config ${CMAKE_PROJECT_NAME}_lib GTest::gtest_main )
+gtest_discover_tests( test_config )
 
-file(GLOB sources *.cc)
-add_executable(${PROJECT_TESTS} ${sources})
+add_executable( test_pid_file test_pid_file.cc )
+target_link_libraries( test_pid_file ${CMAKE_PROJECT_NAME}_lib GTest::gtest_main )
+gtest_discover_tests( test_pid_file )
 
-find_package(GTest REQUIRED)
-find_package(Threads REQUIRED)
+add_executable( test_executor test_executor.cc )
+target_link_libraries( test_executor ${CMAKE_PROJECT_NAME}_lib GTest::gtest_main )
+gtest_discover_tests( test_executor )
 
-set(libs ${CMAKE_PROJECT_NAME} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
-target_link_libraries(${PROJECT_TESTS} ${libs})
-
-# Set default compile flags for GCC
-if(CMAKE_COMPILER_IS_GNUCXX)
-  message(STATUS "GCC detected, adding compile flags")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
-endif(CMAKE_COMPILER_IS_GNUCXX)
+# Integration tests (shell-based)
+if(WIN32)
+    add_test(NAME integration_tests
+        COMMAND powershell -ExecutionPolicy Bypass -File ${CMAKE_SOURCE_DIR}/tests/test_frequent_cron.ps1 -Binary ${CMAKE_SOURCE_DIR}/frequent-cron.exe
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    )
+else()
+    add_test(NAME integration_tests
+        COMMAND bash ${CMAKE_SOURCE_DIR}/tests/test_frequent_cron.sh ${CMAKE_SOURCE_DIR}/frequent-cron
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    )
+endif()
