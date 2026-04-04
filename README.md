@@ -9,7 +9,7 @@ Licensed under the MIT License.
 
 ## Dependencies
 
-- [Boost](https://www.boost.org/) 1.37+ (`sudo apt-get install libboost-all-dev`)
+- [Boost](https://www.boost.org/) 1.37+ (`sudo apt-get install libboost-system-dev libboost-program-options-dev`)
 - [CMake](https://cmake.org/) 2.8.2+ (`sudo apt-get install cmake`)
 
 
