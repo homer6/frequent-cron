@@ -36,13 +36,13 @@ ParseOutput parse_args( int argc, char** argv ){
         }
 
         if( !vm.count("frequency") ){
-            output.result = ParseResult::ERROR;
+            output.result = ParseResult::PARSE_ERROR;
             output.message = "Frequency was not set.";
             return output;
         }
 
         if( !vm.count("command") ){
-            output.result = ParseResult::ERROR;
+            output.result = ParseResult::PARSE_ERROR;
             output.message = "Command was not set.";
             return output;
         }
@@ -66,7 +66,7 @@ ParseOutput parse_args( int argc, char** argv ){
         output.result = ParseResult::OK;
 
     } catch( const std::exception& e ){
-        output.result = ParseResult::ERROR;
+        output.result = ParseResult::PARSE_ERROR;
         output.message = e.what();
     }
 

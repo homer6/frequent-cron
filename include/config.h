@@ -14,7 +14,7 @@ struct Config {
 enum class ParseResult {
     OK,
     HELP,
-    ERROR
+    PARSE_ERROR
 };
 
 struct ParseOutput {

@@ -9,13 +9,13 @@ TEST(Config, HelpReturnsHelp) {
 
 TEST(Config, MissingFrequencyReturnsError) {
     auto output = parse_args({"--command=echo hi"});
-    EXPECT_EQ(output.result, ParseResult::ERROR);
+    EXPECT_EQ(output.result, ParseResult::PARSE_ERROR);
     EXPECT_TRUE(output.message.find("Frequency") != std::string::npos);
 }
 
 TEST(Config, MissingCommandReturnsError) {
     auto output = parse_args({"--frequency=1000"});
-    EXPECT_EQ(output.result, ParseResult::ERROR);
+    EXPECT_EQ(output.result, ParseResult::PARSE_ERROR);
     EXPECT_TRUE(output.message.find("Command") != std::string::npos);
 }
 
@@ -85,5 +85,5 @@ TEST(Config, SynchronousZero) {
 
 TEST(Config, UnknownOptionReturnsError) {
     auto output = parse_args({"--frequency=100", "--command=echo hi", "--bogus"});
-    EXPECT_EQ(output.result, ParseResult::ERROR);
+    EXPECT_EQ(output.result, ParseResult::PARSE_ERROR);
 }

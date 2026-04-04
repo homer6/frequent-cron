@@ -10,6 +10,10 @@ find_package( Boost 1.37 COMPONENTS program_options REQUIRED )
 target_include_directories( ${CMAKE_PROJECT_NAME}_lib PUBLIC ${CMAKE_SOURCE_DIR}/include ${Boost_INCLUDE_DIR} )
 target_link_libraries( ${CMAKE_PROJECT_NAME}_lib PUBLIC ${Boost_LIBRARIES} )
 
+if(WIN32)
+    target_compile_definitions( ${CMAKE_PROJECT_NAME}_lib PUBLIC _WIN32_WINNT=0x0601 NOMINMAX )
+endif()
+
 # Executable
 add_executable( ${CMAKE_PROJECT_NAME} main.cc )
 target_link_libraries( ${CMAKE_PROJECT_NAME} ${CMAKE_PROJECT_NAME}_lib )

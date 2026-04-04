@@ -14,7 +14,7 @@ int main( int argc, char** argv ){
         return 1;
     }
 
-    if( output.result == ParseResult::ERROR ){
+    if( output.result == ParseResult::PARSE_ERROR ){
         std::cout << output.message << "\n";
         return 1;
     }

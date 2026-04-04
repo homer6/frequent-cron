@@ -41,7 +41,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install Boost
-        run: vcpkg install boost-asio boost-program-options
+        run: vcpkg install boost-asio:x64-windows boost-program-options:x64-windows
 
       - name: Build
         run: |
