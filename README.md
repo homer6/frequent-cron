@@ -1,57 +1,76 @@
-Overview
-------------
-frequent-cron is a linux daemon under the MIT License. It is designed to run crons by millisecond in linux.
+# frequent-cron
 
-By default, calls to the scripts or commands block, meaning that if you have a 500ms frequent-cron and your script
-runs for 3 minutes, your script will run once every 3 minutes.
+A lightweight Linux daemon that executes shell commands at sub-second intervals. Standard cron only supports minute-level granularity -- frequent-cron supports millisecond precision.
 
-You can set `--synchronous=false` if you'd like frequent-cron to call your script asynchronously. Warning: running scripts
-asynchronously can cause unbounded resource growth if the script never exits or is called too frequently (eg. consuming
-too many database connections or too much memory). Synchronous (the default) is the safer path. So, just be aware that
-if you choose to run frequenty-cron asynchronously, you've been given enough rope to hang yourself.
+By default, command execution is **blocking** (synchronous): if a command takes longer than the configured interval, the next execution waits until the previous one completes. For example, a 500ms interval with a command that takes 3 minutes will effectively run once every 3 minutes.
+
+You can set `--synchronous=false` to run commands asynchronously. Warning: running asynchronously can cause unbounded resource growth if the script never exits or is called too frequently (e.g. consuming too many database connections or too much memory). Synchronous (the default) is the safer option.
+
+Licensed under the MIT License.
 
 
-Dependencies
-------------
+## Dependencies
 
-  - Boost 1.37 (apt-get install libboost-all-dev)
-  - cmake 2.8.2 (apt-get install cmake)
-
-
-Installation
-------------
-
-  - git clone https://github.com/homer6/frequent-cron.git
-  - cd frequent-cron
-  - cmake .
-  - make
+- [Boost](https://www.boost.org/) 1.37+ (`sudo apt-get install libboost-system-dev libboost-program-options-dev`)
+- [CMake](https://cmake.org/) 2.8.2+ (`sudo apt-get install cmake`)
 
 
-Starting the Service (Simple)
------------------------------
-  - ./frequent-cron --frequency=1000 --command="/usr/local/bin/php /home/ssperandeo/dev/homer6/frequent-cron/test.php"
+## Installation
+
+```bash
+git clone https://github.com/homer6/frequent-cron.git
+cd frequent-cron
+cmake .
+make
+```
 
 
-Stopping the Service (Simple)
------------------------------
-  - ps aux | grep frequent
-  - kill 3423
+## Usage
 
+### Command-Line Options
 
+| Option | Description |
+|---|---|
+| `--frequency` | Interval in milliseconds between command executions |
+| `--command` | Shell command to execute |
+| `--pid-file` | Path to write the daemon's PID (optional) |
+| `--synchronous` | Set to `false` for async execution (default: `true`) |
+| `--help` | Display help |
 
-Starting the Service (Using init.d)
------------------------------------
-  - sudo cp init_script.tpl /etc/init.d/frequent_service
-  - edit "command", "frequency" and "pid-file" (make sure both the "command" and the "pid-file" are absolute paths)
-  - sudo chmod ugo+x /etc/init.d/frequent_service
-  - sudo update-rc.d frequent_service defaults  (optional; will automatically restart this service on system restart)
-  - sudo /etc/init.d/frequent_service start
+### Running Directly
 
+```bash
+./frequent-cron --frequency=1000 --command="/path/to/your/script.sh"
+```
 
-Stopping the Service (Using init.d)
-----------------------------------
-  - sudo /etc/init.d/frequent_service stop
+To stop, find and kill the process:
 
+```bash
+ps aux | grep frequent-cron
+kill <pid>
+```
 
+### Running as an init.d Service
 
+1. Copy the template:
+   ```bash
+   sudo cp init_script.tpl /etc/init.d/frequent_service
+   ```
 
+2. Edit `/etc/init.d/frequent_service` and set `COMMAND`, `FREQUENCY`, and `PIDFILE` (use absolute paths).
+
+3. Enable and start:
+   ```bash
+   sudo chmod +x /etc/init.d/frequent_service
+   sudo /etc/init.d/frequent_service start
+   ```
+
+4. Optionally, enable auto-start on boot:
+   ```bash
+   sudo update-rc.d frequent_service defaults
+   ```
+
+5. To stop:
+   ```bash
+   sudo /etc/init.d/frequent_service stop
+   ```
