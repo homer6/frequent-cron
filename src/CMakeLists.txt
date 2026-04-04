@@ -7,7 +7,7 @@ add_library( ${CMAKE_PROJECT_NAME}_lib STATIC
 )
 
 find_package( Boost 1.37 COMPONENTS program_options REQUIRED )
-target_include_directories( ${CMAKE_PROJECT_NAME}_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${Boost_INCLUDE_DIR} )
+target_include_directories( ${CMAKE_PROJECT_NAME}_lib PUBLIC ${CMAKE_SOURCE_DIR}/include ${Boost_INCLUDE_DIR} )
 target_link_libraries( ${CMAKE_PROJECT_NAME}_lib PUBLIC ${Boost_LIBRARIES} )
 
 # Executable
