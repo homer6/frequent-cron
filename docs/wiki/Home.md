@@ -1,6 +1,6 @@
 # frequent-cron
 
-A lightweight daemon and service manager for running shell commands at millisecond intervals. Sub-second cron for Linux, macOS, and Windows.
+A lightweight daemon and service manager for running shell commands at millisecond intervals. Sub-second cron for Linux, macOS, FreeBSD, and Windows.
 
 ## Quick Links
 

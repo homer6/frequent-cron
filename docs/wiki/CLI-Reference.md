@@ -41,7 +41,7 @@ frequent-cron install <name> --frequency=<ms> --command=<cmd> [options]
 
 Creates:
 - SQLite registry entry
-- systemd unit file (Linux), launchd plist (macOS), or SCM entry (Windows)
+- systemd unit file (Linux), launchd plist (macOS), rc.d script (FreeBSD), or SCM entry (Windows)
 
 ### `remove`
 

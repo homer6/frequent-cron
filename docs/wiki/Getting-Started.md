@@ -55,7 +55,7 @@ frequent-cron logs my-poller
 frequent-cron stop my-poller
 ```
 
-The `install` command also creates a platform-native service definition (systemd unit, launchd plist, or Windows Service) so the OS can supervise and auto-restart your service.
+The `install` command also creates a platform-native service definition (systemd unit, launchd plist, rc.d script, or Windows Service) so the OS can supervise and auto-restart your service.
 
 ## 4. Understand Execution Modes
 
@@ -78,4 +78,4 @@ Use async mode with caution -- if your script never exits or is called too frequ
 - [CLI Reference](CLI-Reference) -- full list of commands and options
 - [Service Management](Service-Management) -- managing multiple services
 - [Logging](Logging) -- log capture and rotation
-- [Platform Guides](Platform-Guides) -- systemd, launchd, Windows Service setup
+- [Platform Guides](Platform-Guides) -- systemd, launchd, rc.d, Windows Service setup

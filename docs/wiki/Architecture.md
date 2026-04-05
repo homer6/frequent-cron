@@ -10,7 +10,7 @@ main.cc
   ├── cmd_run()             → Executor + daemonize + run
   └── ServiceRegistry       → install/remove/start/stop/status/list/logs
         ├── Database         → SQLite CRUD
-        ├── PlatformService  → systemd/launchd/SCM
+        ├── PlatformService  → systemd/launchd/rc.d/SCM
         └── LogManager       → per-service log files
 ```
 
@@ -23,7 +23,7 @@ main.cc
 | Process | `process.h` | `process.cc` | Command execution with output capture |
 | Database | `database.h` | `database.cc` | SQLite wrapper, ServiceRecord/ServiceState CRUD |
 | Service Registry | `service_registry.h` | `service_registry.cc` | High-level subcommand handlers |
-| Platform Service | `platform_service.h` | `platform_service.cc` | Abstract interface + systemd/launchd/SCM |
+| Platform Service | `platform_service.h` | `platform_service.cc` | Abstract interface + systemd/launchd/rc.d/SCM |
 | Log Manager | `log_manager.h` | `log_manager.cc` | Per-service log files with rotation |
 | Data Dir | `data_dir.h` | `data_dir.cc` | Platform-specific path resolution |
 | Daemonize | `daemonize.h` | `daemonize.cc` | fork()/setsid() on POSIX, no-op on Windows |
@@ -53,7 +53,7 @@ main() → parse_args() → Config{subcommand=RUN}
 main() → parse_args() → Config{subcommand=INSTALL, service_name="foo"}
   → ServiceRegistry(data_dir)
     → Database::insert_service()     // SQLite insert
-    → PlatformService::install()     // write systemd unit / launchd plist / SCM entry
+    → PlatformService::install()     // write systemd unit / launchd plist / rc.d script / SCM entry
 ```
 
 ### Service Start (`frequent-cron start`)
@@ -98,6 +98,7 @@ class PlatformService {
 Compile-time `#ifdef` selects:
 - `SystemdService` on `__linux__`
 - `LaunchdService` on `__APPLE__`
+- `RcdService` on `__FreeBSD__`
 - `ScmService` on `_WIN32`
 
 ## Build System
