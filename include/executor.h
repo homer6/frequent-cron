@@ -1,5 +1,12 @@
 #pragma once
 
+#ifdef _WIN32
+    #include <winsock2.h>    // must come before <windows.h> to prevent WinSock 1 conflict
+    #include <ws2tcpip.h>
+    #include <windows.h>
+    #include <process.h>     // _beginthreadex, required by Boost ASIO's win_thread
+#endif
+
 #include <string>
 #include <chrono>
 #include <memory>
@@ -7,12 +14,18 @@
 
 #include <boost/asio.hpp>
 
+using OutputCallback = std::function<void(const std::string& output)>;
+
 class Executor {
 public:
     Executor( const std::string& command, int frequency_ms, bool synchronous );
 
     void run();
     void stop();
+
+    // Set a callback to receive command output (for log capture).
+    // When set, uses run_process() instead of system().
+    void set_output_callback( OutputCallback callback );
 
     // Exposed for testing
     int execution_count() const { return execution_count_; }
@@ -27,6 +40,7 @@ private:
     std::chrono::milliseconds frequency_;
     bool synchronous_;
     int execution_count_ = 0;
+    OutputCallback output_callback_;
 
     std::shared_ptr<boost::asio::io_context> io_context_;
     std::shared_ptr<boost::asio::steady_timer> timer_;

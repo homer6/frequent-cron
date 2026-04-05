@@ -1,17 +1,14 @@
-#ifdef _WIN32
-    #define WIN32_LEAN_AND_MEAN
-    #include <process.h>
-    #include <windows.h>
-#else
+#include "executor.h"
+#include "process_runner.h"
+
+#include <iostream>
+#include <cstdlib>
+
+#ifndef _WIN32
     #include <sys/types.h>
     #include <sys/wait.h>
     #include <unistd.h>
 #endif
-
-#include "executor.h"
-
-#include <iostream>
-#include <cstdlib>
 
 Executor::Executor( const std::string& command, int frequency_ms, bool synchronous )
     : command_(command)
@@ -29,6 +26,10 @@ void Executor::run(){
 
 void Executor::stop(){
     io_context_->stop();
+}
+
+void Executor::set_output_callback( OutputCallback callback ){
+    output_callback_ = std::move(callback);
 }
 
 void Executor::register_callback(){
@@ -55,7 +56,13 @@ void Executor::timer_callback( const boost::system::error_code& error ){
 }
 
 void Executor::execute_sync(){
-    system( command_.c_str() );
+
+    if( output_callback_ ){
+        auto result = run_process( command_ );
+        output_callback_( result.stdout_data );
+    }else{
+        system( command_.c_str() );
+    }
     register_callback();
 }
 
@@ -63,15 +70,27 @@ void Executor::execute_async(){
 
 #ifdef _WIN32
     register_callback();
-    std::string async_cmd = "cmd /c start /b " + command_;
-    system( async_cmd.c_str() );
+    if( output_callback_ ){
+        auto result = run_process( command_ );
+        output_callback_( result.stdout_data );
+    }else{
+        std::string async_cmd = "cmd /c start /b " + command_;
+        system( async_cmd.c_str() );
+    }
 #else
     register_callback();
 
     pid_t fork_result = fork();
 
     if( fork_result == 0 ){
-        system( command_.c_str() );
+        if( output_callback_ ){
+            auto result = run_process( command_ );
+            if( !result.stdout_data.empty() ){
+                fputs(result.stdout_data.c_str(), stdout);
+            }
+        }else{
+            system( command_.c_str() );
+        }
         _exit(0);
     }else if( fork_result == -1 ){
         std::cerr << "frequent-cron: failed to fork." << std::endl;

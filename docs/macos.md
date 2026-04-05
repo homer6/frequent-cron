@@ -3,7 +3,7 @@
 ## Dependencies
 
 ```bash
-brew install boost cmake
+brew install boost cmake sqlite
 ```
 
 ## Build
@@ -20,10 +20,33 @@ sudo make install
 ## Running Directly
 
 ```bash
-./frequent-cron --frequency=1000 --command="/path/to/your/script.sh" --pid-file=/tmp/frequent-cron.pid
+frequent-cron run --frequency=1000 --command="/path/to/your/script.sh" --pid-file=/tmp/frequent-cron.pid
 ```
 
-## Running as a launchd Service
+## Managing Services
+
+```bash
+# Register a service
+frequent-cron install myservice --frequency=1000 --command="/path/to/script.sh"
+
+# This also creates a launchd plist at:
+#   ~/Library/LaunchAgents/com.frequent-cron.myservice.plist
+
+# Start/stop/status
+frequent-cron start myservice
+frequent-cron status
+frequent-cron stop myservice
+
+# View logs
+frequent-cron logs myservice
+
+# Remove (also removes the launchd plist)
+frequent-cron remove myservice
+```
+
+## Manual launchd Setup
+
+If you prefer to manage the plist yourself:
 
 1. Create a plist file at `~/Library/LaunchAgents/com.frequent-cron.myjob.plist`:
 
@@ -37,6 +60,7 @@ sudo make install
        <key>ProgramArguments</key>
        <array>
            <string>/usr/local/bin/frequent-cron</string>
+           <string>run</string>
            <string>--frequency=1000</string>
            <string>--command=/path/to/your/script.sh</string>
            <string>--pid-file=/tmp/frequent-cron-myjob.pid</string>

@@ -6,10 +6,10 @@
 - [vcpkg](https://github.com/microsoft/vcpkg)
 - [CMake](https://cmake.org/download/) 3.14+
 
-### Installing Boost with vcpkg
+### Installing dependencies with vcpkg
 
 ```powershell
-vcpkg install boost-asio:x64-windows boost-program-options:x64-windows
+vcpkg install boost-asio:x64-windows boost-program-options:x64-windows sqlite3:x64-windows
 ```
 
 ## Build
@@ -25,24 +25,41 @@ ctest --output-on-failure -C Release
 ## Running Directly
 
 ```powershell
-.\frequent-cron.exe --frequency=1000 --command="C:\path\to\your\script.bat" --pid-file=C:\path\to\frequent-cron.pid
+.\frequent-cron.exe run --frequency=1000 --command="C:\path\to\your\script.bat" --pid-file=C:\path\to\frequent-cron.pid
 ```
 
-## Running as a Windows Service
+## Managing Services
 
-You can use Windows Task Scheduler to run frequent-cron at startup:
+```powershell
+# Register a service (also creates a Windows Service via SCM)
+# Run as Administrator for SCM access
+frequent-cron.exe install myservice --frequency=1000 --command="C:\path\to\script.bat"
+
+# Start/stop/status
+frequent-cron.exe start myservice
+frequent-cron.exe status
+frequent-cron.exe stop myservice
+
+# View logs
+frequent-cron.exe logs myservice
+
+# Remove (also removes the Windows Service)
+frequent-cron.exe remove myservice
+```
+
+## Manual Windows Service Setup
+
+If you prefer to manage the service yourself using Task Scheduler:
 
 1. Open Task Scheduler and create a new task.
 2. Under **General**, select "Run whether user is logged on or not".
 3. Under **Triggers**, add a trigger for "At startup".
 4. Under **Actions**, add an action:
    - Program: `C:\path\to\frequent-cron.exe`
-   - Arguments: `--frequency=1000 --command=C:\path\to\your\script.bat --pid-file=C:\path\to\frequent-cron.pid`
+   - Arguments: `run --frequency=1000 --command=C:\path\to\your\script.bat --pid-file=C:\path\to\frequent-cron.pid`
 5. Under **Settings**, uncheck "Stop the task if it runs longer than".
-
-Alternatively, use `sc.exe` to register a native Windows service if you wrap frequent-cron with a service host.
 
 ## Notes
 
-- On Windows, frequent-cron runs in the foreground (no daemonization). Use Task Scheduler or a service wrapper for background execution.
+- On Windows, frequent-cron runs in the foreground when started from the command line. Use the `install` subcommand for background service execution via SCM.
 - Async mode (`--synchronous=false`) uses `cmd /c start /b` on Windows instead of `fork()`.

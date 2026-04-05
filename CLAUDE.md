@@ -1,6 +1,6 @@
 # frequent-cron
 
-A daemon that runs shell commands at millisecond intervals (sub-second cron). Production-stable for 15+ years. Runs on Linux, macOS, and Windows.
+A daemon and service manager that runs shell commands at millisecond intervals (sub-second cron). Production-stable for 15+ years. Runs on Linux, macOS, FreeBSD, and Windows.
 
 ## Build
 
@@ -8,53 +8,77 @@ A daemon that runs shell commands at millisecond intervals (sub-second cron). Pr
 cmake .
 make
 make test
-make install
+sudo make install
 ```
-
-Produces the `frequent-cron` executable in the project root.
 
 ## Dependencies
 
 - Boost 1.37+ (components: `asio`, `program_options`)
+- SQLite3
 - CMake 3.14+
 - C++23
 
 ## Architecture
 
-Modular C++ daemon split into a static library and thin main:
+Modular C++ with static library (`frequent-cron_lib`) and thin `main.cc`:
 
-- **`include/config.h`** -- `Config` struct and `parse_args()` for CLI parsing (wraps `boost::program_options`)
-- **`include/executor.h`** -- `Executor` class owning `io_context`, `steady_timer`, sync/async dispatch
-- **`include/pid_file.h`** -- `write_pid_file()` utility
-- **`include/daemonize.h`** -- `daemonize()` with `#ifdef _WIN32` guards (no-op on Windows)
-- **`src/main.cc`** -- thin wiring: parse args, daemonize, write PID, run executor
+### Core Modules (`include/` + `src/`)
+- **`config.h/cc`** -- Subcommand enum + `parse_args()`. Supports: `run`, `install`, `remove`, `start`, `stop`, `status`, `list`, `logs`, and legacy mode (backward compat)
+- **`executor.h/cc`** -- `Executor` class: Boost ASIO `io_context` + `steady_timer` event loop. Optional `OutputCallback` for log capture (uses `run_process()` when set, `system()` when not)
+- **`process_runner.h`** / **`process.cc`** -- `run_process()`: cross-platform command execution with stdout/stderr capture via `popen`
+- **`database.h/cc`** -- SQLite wrapper: `ServiceRecord` + `ServiceState` CRUD with WAL mode
+- **`service_registry.h/cc`** -- High-level subcommand handlers: install/remove/start/stop/status/list/logs
+- **`platform_service.h/cc`** -- Abstract `PlatformService` interface with factory. Implementations: `SystemdService` (Linux), `LaunchdService` (macOS), `RcdService` (FreeBSD), `ScmService` (Windows)
+- **`log_manager.h/cc`** -- Per-service log files with timestamps and size-based rotation
+- **`data_dir.h/cc`** -- Platform-specific default data directory resolution
+- **`daemonize.h/cc`** -- `fork()`+`setsid()` on POSIX, no-op on Windows
+- **`pid_file.h/cc`** -- Write PID to file
 
-**Execution flow:** `main()` -> `parse_args()` -> `Executor()` -> `daemonize()` -> `write_pid_file()` -> `executor.run()` (enters Boost ASIO event loop)
+### Data Directory
+- Linux/FreeBSD: `~/.local/share/frequent-cron` (user) or `/var/lib/frequent-cron` (root)
+- macOS: `~/Library/Application Support/frequent-cron`
+- Windows: `%LOCALAPPDATA%\frequent-cron`
 
-**Sync mode** (default): `system()` blocks, next timer fires after command completes.
-**Async mode** (`--synchronous=false`): `fork()` + `system()` in child, timer keeps firing. On Windows, uses `cmd /c start /b`.
+### Boot-Start Behavior
+All platforms auto-start installed services at boot:
+- Linux: systemd `WantedBy=multi-user.target` + `Restart=on-failure`
+- macOS: launchd `RunAtLoad` + `KeepAlive`
+- FreeBSD: rc.d `sysrc enable=YES`
+- Windows: SCM `SERVICE_AUTO_START`
+
+Contents: `frequent-cron.db`, `logs/<name>.log`, `pids/<name>.pid`
 
 ## Testing
 
 ```bash
-make test    # runs all 25 tests via CTest
+make test    # runs all tests via CTest
 ```
 
-- **GTest unit tests**: `tests/test_config.cc`, `tests/test_pid_file.cc`, `tests/test_executor.cc`
+- **70 GTest unit tests**: config (32), pid_file (3), executor (7), data_dir (4), database (12), process (5), log_manager (7)
 - **Integration tests**: `tests/test_frequent_cron.sh` (Linux/macOS), `tests/test_frequent_cron.ps1` (Windows)
-- **CI**: GitHub Actions on Linux, macOS, and Windows
+- **CI**: GitHub Actions on Linux, macOS, FreeBSD, Windows (per-platform workflows, vcpkg binary caching)
 
 ## Key Files
 
-- `include/` -- public headers (config, executor, pid_file, daemonize)
-- `src/` -- implementation files and main
-- `tests/` -- GTest unit tests and integration test scripts
-- `docs/` -- platform-specific installation guides (macOS, Ubuntu, Windows)
-- `init_script.tpl` -- template for Linux `/etc/init.d` service script
+- `include/` -- public headers
+- `src/` -- implementation files and main.cc
+- `tests/` -- GTest unit tests + bash/PowerShell integration scripts
+- `docs/` -- platform install guides (macOS, Ubuntu, FreeBSD, Windows)
+- `docs/wiki/` -- comprehensive documentation (Getting Started, CLI Reference, Architecture, FAQ, etc.)
+- `docs/releases/` -- release notes for all versions
+- `docs/init_script.tpl` -- legacy init.d service script template (prefer `install` subcommand)
 
 ## Usage
 
 ```bash
-./frequent-cron --frequency=1000 --command="/path/to/script.sh" --pid-file=/var/run/myservice.pid
-./frequent-cron --frequency=500 --command="/path/to/script.sh" --synchronous=false
+# Direct execution (legacy mode)
+frequent-cron --frequency=1000 --command="/path/to/script.sh" --pid-file=/var/run/fc.pid
+
+# Service management
+frequent-cron install myservice --frequency=1000 --command="/path/to/script.sh"
+frequent-cron start myservice
+frequent-cron status
+frequent-cron logs myservice
+frequent-cron stop myservice
+frequent-cron remove myservice
 ```
