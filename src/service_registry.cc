@@ -1,5 +1,6 @@
 #include "service_registry.h"
 
+#include <cstring>
 #include <fstream>
 #include <iomanip>
 #include <sstream>
