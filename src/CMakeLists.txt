@@ -14,8 +14,9 @@ add_library( ${CMAKE_PROJECT_NAME}_lib STATIC
 
 find_package( Boost 1.37 COMPONENTS program_options REQUIRED )
 find_package( SQLite3 REQUIRED )
+find_package( Threads REQUIRED )
 target_include_directories( ${CMAKE_PROJECT_NAME}_lib PUBLIC ${CMAKE_SOURCE_DIR}/include ${Boost_INCLUDE_DIR} )
-target_link_libraries( ${CMAKE_PROJECT_NAME}_lib PUBLIC ${Boost_LIBRARIES} SQLite::SQLite3 )
+target_link_libraries( ${CMAKE_PROJECT_NAME}_lib PUBLIC ${Boost_LIBRARIES} SQLite::SQLite3 Threads::Threads )
 
 if(WIN32)
     target_compile_definitions( ${CMAKE_PROJECT_NAME}_lib PUBLIC _WIN32_WINNT=0x0601 NOMINMAX WIN32_LEAN_AND_MEAN )
