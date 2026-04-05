@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "process.h"
+#include "process_runner.h"
 
 TEST(Process, CapturesStdout) {
     auto result = run_process("echo hello");
