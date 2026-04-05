@@ -7,6 +7,7 @@ add_library( ${CMAKE_PROJECT_NAME}_lib STATIC
     data_dir.cc
     database.cc
     service_registry.cc
+    platform_service.cc
 )
 
 find_package( Boost 1.37 COMPONENTS program_options REQUIRED )

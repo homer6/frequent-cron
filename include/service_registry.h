@@ -3,6 +3,7 @@
 #include "config.h"
 #include "database.h"
 #include "data_dir.h"
+#include "platform_service.h"
 
 #include <filesystem>
 #include <iostream>
@@ -23,7 +24,9 @@ public:
 private:
     std::filesystem::path data_dir_;
     Database db_;
+    std::unique_ptr<PlatformService> platform_;
 
     bool is_process_running( int pid );
     std::string get_actual_status( const std::string& name );
+    std::filesystem::path get_binary_path();
 };

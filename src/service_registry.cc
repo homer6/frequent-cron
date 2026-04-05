@@ -20,7 +20,31 @@
 ServiceRegistry::ServiceRegistry( const std::filesystem::path& data_dir )
     : data_dir_(data_dir)
     , db_(data_dir / "frequent-cron.db")
+    , platform_(PlatformService::create())
 {
+}
+
+std::filesystem::path ServiceRegistry::get_binary_path(){
+#ifdef _WIN32
+    char path[MAX_PATH];
+    GetModuleFileNameA(nullptr, path, MAX_PATH);
+    return std::filesystem::path(path);
+#elif defined(__APPLE__)
+    char path[4096];
+    uint32_t size = sizeof(path);
+    if( _NSGetExecutablePath(path, &size) == 0 ){
+        return std::filesystem::path(path);
+    }
+    return "frequent-cron";
+#else
+    char path[4096];
+    ssize_t len = readlink("/proc/self/exe", path, sizeof(path) - 1);
+    if( len > 0 ){
+        path[len] = '\0';
+        return std::filesystem::path(path);
+    }
+    return "frequent-cron";
+#endif
 }
 
 bool ServiceRegistry::is_process_running( int pid ){
@@ -76,6 +100,11 @@ int ServiceRegistry::cmd_install( const Config& config ){
         return 1;
     }
 
+    // Install platform-native service definition
+    if( platform_ ){
+        platform_->install(config.service_name, rec, get_binary_path(), data_dir_);
+    }
+
     std::cout << "Service '" << config.service_name << "' installed.\n";
     std::cout << "  command:     " << config.command << "\n";
     std::cout << "  frequency:   " << config.frequency << "ms\n";
@@ -96,6 +125,11 @@ int ServiceRegistry::cmd_remove( const std::string& name ){
     auto status = get_actual_status(name);
     if( status == "running" ){
         cmd_stop(name);
+    }
+
+    // Remove platform-native service definition
+    if( platform_ ){
+        platform_->uninstall(name);
     }
 
     if( !db_.remove_service(name) ){
@@ -134,31 +168,12 @@ int ServiceRegistry::cmd_start( const std::string& name ){
         return 1;
     }
 
-    // Find our own binary path
     auto pid_path = data_dir_ / "pids" / (name + ".pid");
-
-#ifdef _WIN32
-    char exe_path[MAX_PATH];
-    GetModuleFileNameA(nullptr, exe_path, MAX_PATH);
-#elif defined(__APPLE__)
-    char exe_path[4096];
-    uint32_t size = sizeof(exe_path);
-    if( _NSGetExecutablePath(exe_path, &size) != 0 ){
-        strncpy(exe_path, "frequent-cron", sizeof(exe_path));
-    }
-#else
-    char exe_path[4096];
-    ssize_t len = readlink("/proc/self/exe", exe_path, sizeof(exe_path) - 1);
-    if( len <= 0 ){
-        strncpy(exe_path, "frequent-cron", sizeof(exe_path));
-    }else{
-        exe_path[len] = '\0';
-    }
-#endif
+    auto bin_path = get_binary_path();
 
     // Build command to launch frequent-cron in run mode
     std::ostringstream cmd;
-    cmd << "\"" << exe_path << "\""
+    cmd << "\"" << bin_path.string() << "\""
         << " run"
         << " --frequency=" << service->frequency_ms
         << " --command=\"" << service->command << "\""
