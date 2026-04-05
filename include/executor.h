@@ -7,12 +7,18 @@
 
 #include <boost/asio.hpp>
 
+using OutputCallback = std::function<void(const std::string& output)>;
+
 class Executor {
 public:
     Executor( const std::string& command, int frequency_ms, bool synchronous );
 
     void run();
     void stop();
+
+    // Set a callback to receive command output (for log capture).
+    // When set, uses run_process() instead of system().
+    void set_output_callback( OutputCallback callback );
 
     // Exposed for testing
     int execution_count() const { return execution_count_; }
@@ -27,6 +33,7 @@ private:
     std::chrono::milliseconds frequency_;
     bool synchronous_;
     int execution_count_ = 0;
+    OutputCallback output_callback_;
 
     std::shared_ptr<boost::asio::io_context> io_context_;
     std::shared_ptr<boost::asio::steady_timer> timer_;

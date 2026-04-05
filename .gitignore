@@ -33,6 +33,8 @@ tests/test_pid_file
 tests/test_executor
 tests/test_data_dir
 tests/test_database
+tests/test_process
+tests/test_log_manager
 
 # GTest discovery artifacts
 tests/cmake_test_discovery_*.json
