@@ -19,10 +19,7 @@ target_include_directories( ${CMAKE_PROJECT_NAME}_lib PUBLIC ${CMAKE_SOURCE_DIR}
 target_link_libraries( ${CMAKE_PROJECT_NAME}_lib PUBLIC ${Boost_LIBRARIES} SQLite::SQLite3 Threads::Threads )
 
 if(WIN32)
-    target_compile_definitions( ${CMAKE_PROJECT_NAME}_lib PUBLIC _WIN32_WINNT=0x0601 NOMINMAX WIN32_LEAN_AND_MEAN )
-    # Force include <process.h> on Windows -- WIN32_LEAN_AND_MEAN strips it from <windows.h>
-    # but Boost ASIO and pid_file need _beginthreadex/_getpid from it
-    target_compile_options( ${CMAKE_PROJECT_NAME}_lib PUBLIC /FI"process.h" )
+    target_compile_definitions( ${CMAKE_PROJECT_NAME}_lib PUBLIC _WIN32_WINNT=0x0601 NOMINMAX _WINSOCKAPI_ )
 endif()
 
 # Executable
