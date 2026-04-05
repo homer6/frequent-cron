@@ -16,9 +16,9 @@ bool write_pid_file( const std::string& filename ){
     }
 
 #ifdef _WIN32
-    file << _getpid();
+    file << static_cast<int>(_getpid());
 #else
-    file << getpid();
+    file << static_cast<int>(getpid());
 #endif
 
     return true;
