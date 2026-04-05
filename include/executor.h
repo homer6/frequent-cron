@@ -1,9 +1,10 @@
 #pragma once
 
 #ifdef _WIN32
-    #include <winsock2.h>
+    #include <winsock2.h>    // must come before <windows.h> to prevent WinSock 1 conflict
     #include <ws2tcpip.h>
     #include <windows.h>
+    #include <process.h>     // _beginthreadex, required by Boost ASIO's win_thread
 #endif
 
 #include <string>
