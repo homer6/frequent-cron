@@ -1,6 +1,6 @@
 # frequent-cron
 
-A daemon and service manager that runs shell commands at millisecond intervals (sub-second cron). Production-stable for 15+ years. Runs on Linux, macOS, and Windows.
+A daemon and service manager that runs shell commands at millisecond intervals (sub-second cron). Production-stable for 15+ years. Runs on Linux, macOS, FreeBSD, and Windows.
 
 ## Build
 
@@ -28,7 +28,7 @@ Modular C++ with static library (`frequent-cron_lib`) and thin `main.cc`:
 - **`process.h/cc`** -- `run_process()`: cross-platform command execution with stdout/stderr capture via `popen`
 - **`database.h/cc`** -- SQLite wrapper: `ServiceRecord` + `ServiceState` CRUD with WAL mode
 - **`service_registry.h/cc`** -- High-level subcommand handlers: install/remove/start/stop/status/list/logs
-- **`platform_service.h/cc`** -- Abstract `PlatformService` interface with factory. Implementations: `SystemdService` (Linux), `LaunchdService` (macOS), `ScmService` (Windows)
+- **`platform_service.h/cc`** -- Abstract `PlatformService` interface with factory. Implementations: `SystemdService` (Linux), `LaunchdService` (macOS), `RcdService` (FreeBSD), `ScmService` (Windows)
 - **`log_manager.h/cc`** -- Per-service log files with timestamps and size-based rotation
 - **`data_dir.h/cc`** -- Platform-specific default data directory resolution
 - **`daemonize.h/cc`** -- `fork()`+`setsid()` on POSIX, no-op on Windows
@@ -49,7 +49,7 @@ make test    # runs all tests via CTest
 
 - **70 GTest unit tests**: config (32), pid_file (3), executor (7), data_dir (4), database (12), process (5), log_manager (7)
 - **Integration tests**: `tests/test_frequent_cron.sh` (Linux/macOS), `tests/test_frequent_cron.ps1` (Windows)
-- **CI**: GitHub Actions on Linux, macOS, Windows (with vcpkg binary caching)
+- **CI**: GitHub Actions on Linux, macOS, FreeBSD, Windows (per-platform workflows, vcpkg binary caching)
 
 ## Key Files
 
