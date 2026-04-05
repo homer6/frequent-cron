@@ -257,7 +257,7 @@ public:
             display_name.c_str(),
             SERVICE_ALL_ACCESS,
             SERVICE_WIN32_OWN_PROCESS,
-            SERVICE_DEMAND_START,
+            SERVICE_AUTO_START,
             SERVICE_ERROR_NORMAL,
             cmd_str.c_str(),
             nullptr, nullptr, nullptr, nullptr, nullptr
