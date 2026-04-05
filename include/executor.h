@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef _WIN32
+    #include <process.h>  // _beginthreadex, needed before boost/asio with WIN32_LEAN_AND_MEAN
+#endif
+
 #include <string>
 #include <chrono>
 #include <memory>

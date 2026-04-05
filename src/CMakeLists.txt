@@ -18,7 +18,7 @@ target_include_directories( ${CMAKE_PROJECT_NAME}_lib PUBLIC ${CMAKE_SOURCE_DIR}
 target_link_libraries( ${CMAKE_PROJECT_NAME}_lib PUBLIC ${Boost_LIBRARIES} SQLite::SQLite3 )
 
 if(WIN32)
-    target_compile_definitions( ${CMAKE_PROJECT_NAME}_lib PUBLIC _WIN32_WINNT=0x0601 NOMINMAX )
+    target_compile_definitions( ${CMAKE_PROJECT_NAME}_lib PUBLIC _WIN32_WINNT=0x0601 NOMINMAX WIN32_LEAN_AND_MEAN )
 endif()
 
 # Executable

@@ -1,5 +1,7 @@
 # frequent-cron
 
+[![CI](https://github.com/homer6/frequent-cron/actions/workflows/ci.yml/badge.svg)](https://github.com/homer6/frequent-cron/actions/workflows/ci.yml)
+
 A lightweight daemon and service manager that executes shell commands at sub-second intervals. Standard cron only supports minute-level granularity -- frequent-cron supports millisecond precision. Runs on Linux, macOS, and Windows.
 
 By default, command execution is **blocking** (synchronous): if a command takes longer than the configured interval, the next execution waits until the previous one completes. For example, a 500ms interval with a command that takes 3 minutes will effectively run once every 3 minutes.
