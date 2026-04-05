@@ -8,6 +8,7 @@ A lightweight daemon and service manager for running shell commands at milliseco
 - [Installation](Installation)
 - [CLI Reference](CLI-Reference)
 - [Service Management](Service-Management)
+- [Service Lifecycle](Service-Lifecycle)
 - [Configuration](Configuration)
 - [Architecture](Architecture)
 - [Logging](Logging)
