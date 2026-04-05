@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y libboost-system-dev libboost-program-options-dev cmake
+        run: sudo apt-get update && sudo apt-get install -y libboost-system-dev libboost-program-options-dev libsqlite3-dev cmake
 
       - name: Build
         run: cmake . && make -j$(nproc)
@@ -27,7 +27,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: brew install boost cmake
+        run: brew install boost cmake sqlite
 
       - name: Build
         run: cmake . && make -j$(sysctl -n hw.ncpu)
@@ -41,7 +41,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install Boost
-        run: vcpkg install boost-asio:x64-windows boost-program-options:x64-windows
+        run: vcpkg install boost-asio:x64-windows boost-program-options:x64-windows sqlite3:x64-windows
 
       - name: Build
         run: |
