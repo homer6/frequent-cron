@@ -1,5 +1,5 @@
 #ifdef _WIN32
-    #include <process.h>
+    #include <windows.h>
 #else
     #include <unistd.h>
 #endif
@@ -16,7 +16,7 @@ bool write_pid_file( const std::string& filename ){
     }
 
 #ifdef _WIN32
-    file << static_cast<int>(_getpid());
+    file << static_cast<int>(GetCurrentProcessId());
 #else
     file << static_cast<int>(getpid());
 #endif
