@@ -1,8 +1,11 @@
 # frequent-cron
 
-[![CI](https://github.com/homer6/frequent-cron/actions/workflows/ci.yml/badge.svg)](https://github.com/homer6/frequent-cron/actions/workflows/ci.yml)
+![Linux](https://github.com/homer6/frequent-cron/actions/workflows/linux.yml/badge.svg)
+![macOS](https://github.com/homer6/frequent-cron/actions/workflows/macos.yml/badge.svg)
+![Windows](https://github.com/homer6/frequent-cron/actions/workflows/windows.yml/badge.svg)
+![FreeBSD](https://github.com/homer6/frequent-cron/actions/workflows/freebsd.yml/badge.svg)
 
-A lightweight daemon and service manager that executes shell commands at sub-second intervals. Standard cron only supports minute-level granularity -- frequent-cron supports millisecond precision. Runs on Linux, macOS, and Windows.
+A lightweight daemon and service manager that executes shell commands at sub-second intervals. Standard cron only supports minute-level granularity -- frequent-cron supports millisecond precision. Runs on Linux, macOS, FreeBSD, and Windows.
 
 By default, command execution is **blocking** (synchronous): if a command takes longer than the configured interval, the next execution waits until the previous one completes. For example, a 500ms interval with a command that takes 3 minutes will effectively run once every 3 minutes.
 
@@ -99,6 +102,7 @@ The `install` command also creates platform-native service definitions:
 
 - **macOS**: See [docs/macos.md](docs/macos.md)
 - **Ubuntu/Debian**: See [docs/ubuntu.md](docs/ubuntu.md)
+- **FreeBSD**: See [docs/freebsd.md](docs/freebsd.md)
 - **Windows**: See [docs/windows.md](docs/windows.md)
 
 

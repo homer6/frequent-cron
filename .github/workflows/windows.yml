@@ -1,4 +1,4 @@
-name: CI
+name: Windows
 
 on:
   push:
@@ -7,35 +7,7 @@ on:
     branches: [master]
 
 jobs:
-  build-linux:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y libboost-system-dev libboost-program-options-dev libsqlite3-dev cmake
-
-      - name: Build
-        run: cmake . && make -j$(nproc)
-
-      - name: Test
-        run: make test ARGS="--output-on-failure"
-
-  build-macos:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: brew install boost cmake sqlite
-
-      - name: Build
-        run: cmake . && make -j$(sysctl -n hw.ncpu)
-
-      - name: Test
-        run: make test ARGS="--output-on-failure"
-
-  build-windows:
+  build:
     runs-on: windows-latest
     env:
       VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"

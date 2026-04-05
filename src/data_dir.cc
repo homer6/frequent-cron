@@ -32,7 +32,7 @@ std::filesystem::path get_default(){
     return std::filesystem::path(home) / "Library" / "Application Support" / "frequent-cron";
 
 #else
-    // Linux: $XDG_DATA_HOME/frequent-cron or ~/.local/share/frequent-cron
+    // Linux/FreeBSD: $XDG_DATA_HOME/frequent-cron or ~/.local/share/frequent-cron
     // Root: /var/lib/frequent-cron
     if( getuid() == 0 ){
         return std::filesystem::path("/var/lib/frequent-cron");

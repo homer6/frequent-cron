@@ -12,6 +12,9 @@
     #include <unistd.h>
     #ifdef __APPLE__
         #include <mach-o/dyld.h>
+    #elif defined(__FreeBSD__)
+        #include <sys/types.h>
+        #include <sys/sysctl.h>
     #endif
 #endif
 
@@ -35,7 +38,22 @@ std::filesystem::path ServiceRegistry::get_binary_path(){
         return std::filesystem::path(path);
     }
     return "frequent-cron";
+#elif defined(__FreeBSD__)
+    char path[4096];
+    ssize_t len = readlink("/proc/curproc/file", path, sizeof(path) - 1);
+    if( len > 0 ){
+        path[len] = '\0';
+        return std::filesystem::path(path);
+    }
+    // Fallback: sysctl KERN_PROC_PATHNAME
+    int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1 };
+    size_t size = sizeof(path);
+    if( sysctl(mib, 4, path, &size, nullptr, 0) == 0 ){
+        return std::filesystem::path(path);
+    }
+    return "frequent-cron";
 #else
+    // Linux
     char path[4096];
     ssize_t len = readlink("/proc/self/exe", path, sizeof(path) - 1);
     if( len > 0 ){

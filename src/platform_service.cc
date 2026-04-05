@@ -320,6 +320,112 @@ private:
 
 
 // ============================================================
+// FreeBSD: rc.d
+// ============================================================
+#if defined(__FreeBSD__)
+
+class RcdService : public PlatformService {
+public:
+
+    bool install( const std::string& name, const ServiceRecord& record,
+                  const std::filesystem::path& binary_path,
+                  const std::filesystem::path& data_dir ) override {
+
+        auto script_path = get_script_path(name);
+        auto pid_path = data_dir / "pids" / (name + ".pid");
+        auto svc_name = get_service_name(name);
+
+        std::ostringstream script;
+        script << "#!/bin/sh\n"
+               << "#\n"
+               << "# PROVIDE: " << svc_name << "\n"
+               << "# REQUIRE: DAEMON\n"
+               << "# KEYWORD: shutdown\n"
+               << "\n"
+               << ". /etc/rc.subr\n"
+               << "\n"
+               << "name=\"" << svc_name << "\"\n"
+               << "rcvar=\"" << svc_name << "_enable\"\n"
+               << "pidfile=\"" << pid_path.string() << "\"\n"
+               << "command=\"" << binary_path.string() << "\"\n"
+               << "command_args=\"run"
+               << " --frequency=" << record.frequency_ms
+               << " --command='" << record.command << "'"
+               << " --pid-file=" << pid_path.string();
+
+        if( !record.synchronous ){
+            script << " --synchronous=false";
+        }
+
+        script << "\"\n"
+               << "\n"
+               << "load_rc_config $name\n"
+               << "run_rc_command \"$1\"\n";
+
+        std::filesystem::create_directories(script_path.parent_path());
+        std::ofstream file(script_path);
+        if( !file ){
+            std::cerr << "Failed to write rc.d script: " << script_path << "\n";
+            return false;
+        }
+        file << script.str();
+        file.close();
+
+        // Make executable
+        std::filesystem::permissions(script_path,
+            std::filesystem::perms::owner_exec | std::filesystem::perms::group_exec | std::filesystem::perms::others_exec,
+            std::filesystem::perm_options::add);
+
+        // Enable in rc.conf
+        std::string enable_cmd = "sysrc " + svc_name + "_enable=YES 2>/dev/null";
+        system(enable_cmd.c_str());
+
+        std::cout << "rc.d script installed: " << script_path << "\n";
+        return true;
+    }
+
+    bool uninstall( const std::string& name ) override {
+        stop(name);
+
+        auto script_path = get_script_path(name);
+        auto svc_name = get_service_name(name);
+
+        // Disable in rc.conf
+        std::string disable_cmd = "sysrc -x " + svc_name + "_enable 2>/dev/null";
+        system(disable_cmd.c_str());
+
+        if( std::filesystem::exists(script_path) ){
+            std::filesystem::remove(script_path);
+            std::cout << "rc.d script removed: " << script_path << "\n";
+        }
+        return true;
+    }
+
+    bool start( const std::string& name ) override {
+        std::string cmd = "service " + get_service_name(name) + " start";
+        return system(cmd.c_str()) == 0;
+    }
+
+    bool stop( const std::string& name ) override {
+        std::string cmd = "service " + get_service_name(name) + " stop 2>/dev/null";
+        system(cmd.c_str());
+        return true;
+    }
+
+private:
+    std::string get_service_name( const std::string& name ){
+        return "frequent_cron_" + name;
+    }
+
+    std::filesystem::path get_script_path( const std::string& name ){
+        return std::filesystem::path("/usr/local/etc/rc.d") / get_service_name(name);
+    }
+};
+
+#endif // __FreeBSD__
+
+
+// ============================================================
 // Factory
 // ============================================================
 
@@ -328,6 +434,8 @@ std::unique_ptr<PlatformService> PlatformService::create(){
     return std::make_unique<SystemdService>();
 #elif defined(__APPLE__)
     return std::make_unique<LaunchdService>();
+#elif defined(__FreeBSD__)
+    return std::make_unique<RcdService>();
 #elif defined(_WIN32)
     return std::make_unique<ScmService>();
 #else
