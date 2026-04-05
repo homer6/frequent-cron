@@ -3,6 +3,7 @@
 #include "pid_file.h"
 #include "executor.h"
 #include "data_dir.h"
+#include "service_registry.h"
 
 #include <iostream>
 #include <filesystem>
@@ -39,6 +40,14 @@ static int cmd_run( const Config& config ){
     return 0;
 }
 
+static ServiceRegistry make_registry( const Config& config ){
+    auto dir = config.data_dir.empty()
+        ? data_dir::get_default()
+        : std::filesystem::path(config.data_dir);
+    data_dir::ensure_exists(dir);
+    return ServiceRegistry(dir);
+}
+
 
 int main( int argc, char** argv ){
 
@@ -62,33 +71,40 @@ int main( int argc, char** argv ){
         case Subcommand::LEGACY:
             return cmd_run( config );
 
-        case Subcommand::INSTALL:
-            std::cerr << "install: not yet implemented\n";
-            return 1;
+        case Subcommand::INSTALL: {
+            auto registry = make_registry(config);
+            return registry.cmd_install(config);
+        }
 
-        case Subcommand::REMOVE:
-            std::cerr << "remove: not yet implemented\n";
-            return 1;
+        case Subcommand::REMOVE: {
+            auto registry = make_registry(config);
+            return registry.cmd_remove(config.service_name);
+        }
 
-        case Subcommand::START:
-            std::cerr << "start: not yet implemented\n";
-            return 1;
+        case Subcommand::START: {
+            auto registry = make_registry(config);
+            return registry.cmd_start(config.service_name);
+        }
 
-        case Subcommand::STOP:
-            std::cerr << "stop: not yet implemented\n";
-            return 1;
+        case Subcommand::STOP: {
+            auto registry = make_registry(config);
+            return registry.cmd_stop(config.service_name);
+        }
 
-        case Subcommand::STATUS:
-            std::cerr << "status: not yet implemented\n";
-            return 1;
+        case Subcommand::STATUS: {
+            auto registry = make_registry(config);
+            return registry.cmd_status(config.service_name);
+        }
 
-        case Subcommand::LIST:
-            std::cerr << "list: not yet implemented\n";
-            return 1;
+        case Subcommand::LIST: {
+            auto registry = make_registry(config);
+            return registry.cmd_list();
+        }
 
-        case Subcommand::LOGS:
-            std::cerr << "logs: not yet implemented\n";
-            return 1;
+        case Subcommand::LOGS: {
+            auto registry = make_registry(config);
+            return registry.cmd_logs(config.service_name);
+        }
     }
 
     return 1;
