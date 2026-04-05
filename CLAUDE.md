@@ -51,6 +51,16 @@ make test    # runs all tests via CTest
 - **Integration tests**: `tests/test_frequent_cron.sh` (Linux/macOS), `tests/test_frequent_cron.ps1` (Windows)
 - **CI**: GitHub Actions on Linux, macOS, Windows (with vcpkg binary caching)
 
+## Key Files
+
+- `include/` -- public headers
+- `src/` -- implementation files and main.cc
+- `tests/` -- GTest unit tests + bash/PowerShell integration scripts
+- `docs/` -- platform install guides (macOS, Ubuntu, Windows)
+- `docs/wiki/` -- comprehensive documentation (Getting Started, CLI Reference, Architecture, FAQ, etc.)
+- `docs/releases/` -- release notes for all versions
+- `docs/init_script.tpl` -- legacy init.d service script template (prefer `install` subcommand)
+
 ## Usage
 
 ```bash

@@ -79,10 +79,10 @@ If you prefer to manage the unit file yourself:
 
 ## Legacy init.d Setup
 
-An init.d script template is available at `init_script.tpl` in the repository root. Copy and configure it:
+An init.d script template is available at `docs/init_script.tpl`. Copy and configure it:
 
 ```bash
-sudo cp init_script.tpl /etc/init.d/frequent_service
+sudo cp docs/init_script.tpl /etc/init.d/frequent_service
 # Edit COMMAND, FREQUENCY, and PIDFILE
 sudo chmod +x /etc/init.d/frequent_service
 sudo /etc/init.d/frequent_service start

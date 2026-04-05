@@ -98,3 +98,17 @@ The `install` command also creates platform-native service definitions:
 - **macOS**: See [docs/macos.md](docs/macos.md)
 - **Ubuntu/Debian**: See [docs/ubuntu.md](docs/ubuntu.md)
 - **Windows**: See [docs/windows.md](docs/windows.md)
+
+
+## Documentation
+
+Full documentation is available in [docs/wiki/](docs/wiki/):
+
+- [Getting Started](docs/wiki/Getting-Started.md)
+- [CLI Reference](docs/wiki/CLI-Reference.md)
+- [Service Management](docs/wiki/Service-Management.md)
+- [Architecture](docs/wiki/Architecture.md)
+- [Logging](docs/wiki/Logging.md)
+- [FAQ](docs/wiki/FAQ.md)
+- [Troubleshooting](docs/wiki/Troubleshooting.md)
+- [Contributing](docs/wiki/Contributing.md)
