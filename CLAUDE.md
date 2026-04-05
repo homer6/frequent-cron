@@ -25,7 +25,7 @@ Modular C++ with static library (`frequent-cron_lib`) and thin `main.cc`:
 ### Core Modules (`include/` + `src/`)
 - **`config.h/cc`** -- Subcommand enum + `parse_args()`. Supports: `run`, `install`, `remove`, `start`, `stop`, `status`, `list`, `logs`, and legacy mode (backward compat)
 - **`executor.h/cc`** -- `Executor` class: Boost ASIO `io_context` + `steady_timer` event loop. Optional `OutputCallback` for log capture (uses `run_process()` when set, `system()` when not)
-- **`process.h/cc`** -- `run_process()`: cross-platform command execution with stdout/stderr capture via `popen`
+- **`process_runner.h`** / **`process.cc`** -- `run_process()`: cross-platform command execution with stdout/stderr capture via `popen`
 - **`database.h/cc`** -- SQLite wrapper: `ServiceRecord` + `ServiceState` CRUD with WAL mode
 - **`service_registry.h/cc`** -- High-level subcommand handlers: install/remove/start/stop/status/list/logs
 - **`platform_service.h/cc`** -- Abstract `PlatformService` interface with factory. Implementations: `SystemdService` (Linux), `LaunchdService` (macOS), `RcdService` (FreeBSD), `ScmService` (Windows)
@@ -35,9 +35,16 @@ Modular C++ with static library (`frequent-cron_lib`) and thin `main.cc`:
 - **`pid_file.h/cc`** -- Write PID to file
 
 ### Data Directory
-- Linux: `~/.local/share/frequent-cron` (user) or `/var/lib/frequent-cron` (root)
+- Linux/FreeBSD: `~/.local/share/frequent-cron` (user) or `/var/lib/frequent-cron` (root)
 - macOS: `~/Library/Application Support/frequent-cron`
 - Windows: `%LOCALAPPDATA%\frequent-cron`
+
+### Boot-Start Behavior
+All platforms auto-start installed services at boot:
+- Linux: systemd `WantedBy=multi-user.target` + `Restart=on-failure`
+- macOS: launchd `RunAtLoad` + `KeepAlive`
+- FreeBSD: rc.d `sysrc enable=YES`
+- Windows: SCM `SERVICE_AUTO_START`
 
 Contents: `frequent-cron.db`, `logs/<name>.log`, `pids/<name>.pid`
 
@@ -56,7 +63,7 @@ make test    # runs all tests via CTest
 - `include/` -- public headers
 - `src/` -- implementation files and main.cc
 - `tests/` -- GTest unit tests + bash/PowerShell integration scripts
-- `docs/` -- platform install guides (macOS, Ubuntu, Windows)
+- `docs/` -- platform install guides (macOS, Ubuntu, FreeBSD, Windows)
 - `docs/wiki/` -- comprehensive documentation (Getting Started, CLI Reference, Architecture, FAQ, etc.)
 - `docs/releases/` -- release notes for all versions
 - `docs/init_script.tpl` -- legacy init.d service script template (prefer `install` subcommand)

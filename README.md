@@ -113,6 +113,7 @@ Full documentation is available in [docs/wiki/](docs/wiki/):
 - [Getting Started](docs/wiki/Getting-Started.md)
 - [CLI Reference](docs/wiki/CLI-Reference.md)
 - [Service Management](docs/wiki/Service-Management.md)
+- [Service Lifecycle](docs/wiki/Service-Lifecycle.md)
 - [Architecture](docs/wiki/Architecture.md)
 - [Logging](docs/wiki/Logging.md)
 - [FAQ](docs/wiki/FAQ.md)
