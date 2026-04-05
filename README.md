@@ -1,6 +1,6 @@
 # frequent-cron
 
-A lightweight daemon that executes shell commands at sub-second intervals. Standard cron only supports minute-level granularity -- frequent-cron supports millisecond precision. Runs on Linux, macOS, and Windows.
+A lightweight daemon and service manager that executes shell commands at sub-second intervals. Standard cron only supports minute-level granularity -- frequent-cron supports millisecond precision. Runs on Linux, macOS, and Windows.
 
 By default, command execution is **blocking** (synchronous): if a command takes longer than the configured interval, the next execution waits until the previous one completes. For example, a 500ms interval with a command that takes 3 minutes will effectively run once every 3 minutes.
 
@@ -12,6 +12,7 @@ Licensed under the MIT License.
 ## Dependencies
 
 - [Boost](https://www.boost.org/) 1.37+ (components: `asio`, `program_options`)
+- [SQLite3](https://www.sqlite.org/)
 - [CMake](https://cmake.org/) 3.14+
 - C++23 compiler
 
@@ -32,20 +33,16 @@ sudo make install
 
 ## Usage
 
-### Command-Line Options
-
-| Option | Description |
-|---|---|
-| `--frequency` | Interval in milliseconds between command executions |
-| `--command` | Shell command to execute |
-| `--pid-file` | Path to write the daemon's PID (optional) |
-| `--synchronous` | Set to `false` for async execution (default: `true`) |
-| `--help` | Display help |
-
-### Running Directly
+### Running a Command Directly
 
 ```bash
-./frequent-cron --frequency=1000 --command="/path/to/your/script.sh" --pid-file=/var/run/frequent-cron.pid
+frequent-cron run --frequency=1000 --command="/path/to/your/script.sh" --pid-file=/var/run/frequent-cron.pid
+```
+
+Or using legacy mode (backward compatible):
+
+```bash
+frequent-cron --frequency=1000 --command="/path/to/your/script.sh" --pid-file=/var/run/frequent-cron.pid
 ```
 
 To stop:
@@ -54,32 +51,50 @@ To stop:
 kill $(cat /var/run/frequent-cron.pid)
 ```
 
-### Running as a Service
+### Managing Named Services
 
-- **macOS**: See [docs/macos.md](docs/macos.md) for launchd setup.
-- **Ubuntu/Debian**: See [docs/ubuntu.md](docs/ubuntu.md) for init.d and systemd setup.
-- **Windows**: See [docs/windows.md](docs/windows.md) for Task Scheduler setup.
-- **Linux (init.d)**:
+Register, start, monitor, and stop services by name:
 
-1. Copy the template:
-   ```bash
-   sudo cp init_script.tpl /etc/init.d/frequent_service
-   ```
+```bash
+# Install a service
+frequent-cron install myservice --frequency=1000 --command="/path/to/script.sh"
 
-2. Edit `/etc/init.d/frequent_service` and set `COMMAND`, `FREQUENCY`, and `PIDFILE` (use absolute paths).
+# Start it
+frequent-cron start myservice
 
-3. Enable and start:
-   ```bash
-   sudo chmod +x /etc/init.d/frequent_service
-   sudo /etc/init.d/frequent_service start
-   ```
+# Check status
+frequent-cron status           # all services
+frequent-cron status myservice  # specific service
 
-4. Optionally, enable auto-start on boot:
-   ```bash
-   sudo update-rc.d frequent_service defaults
-   ```
+# View logs
+frequent-cron logs myservice
 
-5. To stop:
-   ```bash
-   sudo /etc/init.d/frequent_service stop
-   ```
+# List all services
+frequent-cron list
+
+# Stop and remove
+frequent-cron stop myservice
+frequent-cron remove myservice
+```
+
+The `install` command also creates platform-native service definitions:
+- **Linux**: systemd unit files
+- **macOS**: launchd plists
+- **Windows**: Windows Service (SCM) entries
+
+### Command-Line Options
+
+| Option | Description |
+|---|---|
+| `--frequency` | Interval in milliseconds between command executions |
+| `--command` | Shell command to execute |
+| `--pid-file` | Path to write the daemon's PID (optional) |
+| `--synchronous` | Set to `false` for async execution (default: `true`) |
+| `--data-dir` | Override the data directory path |
+| `--help` | Display help |
+
+### Platform Setup
+
+- **macOS**: See [docs/macos.md](docs/macos.md)
+- **Ubuntu/Debian**: See [docs/ubuntu.md](docs/ubuntu.md)
+- **Windows**: See [docs/windows.md](docs/windows.md)

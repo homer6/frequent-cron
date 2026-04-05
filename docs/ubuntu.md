@@ -3,7 +3,7 @@
 ## Dependencies
 
 ```bash
-sudo apt-get install libboost-system-dev libboost-program-options-dev cmake build-essential
+sudo apt-get install libboost-system-dev libboost-program-options-dev libsqlite3-dev cmake build-essential
 ```
 
 ## Build
@@ -20,35 +20,33 @@ sudo make install
 ## Running Directly
 
 ```bash
-./frequent-cron --frequency=1000 --command="/path/to/your/script.sh" --pid-file=/var/run/frequent-cron.pid
+frequent-cron run --frequency=1000 --command="/path/to/your/script.sh" --pid-file=/var/run/frequent-cron.pid
 ```
 
-## Running as an init.d Service
+## Managing Services
 
-1. Copy the template:
-   ```bash
-   sudo cp init_script.tpl /etc/init.d/frequent_service
-   ```
+```bash
+# Register a service (also creates a systemd unit file)
+sudo frequent-cron install myservice --frequency=1000 --command="/path/to/script.sh"
 
-2. Edit `/etc/init.d/frequent_service` and set `COMMAND`, `FREQUENCY`, and `PIDFILE` (use absolute paths).
+# This creates: /etc/systemd/system/frequent-cron-myservice.service
+# For non-root: ~/.config/systemd/user/frequent-cron-myservice.service
 
-3. Enable and start:
-   ```bash
-   sudo chmod +x /etc/init.d/frequent_service
-   sudo /etc/init.d/frequent_service start
-   ```
+# Start/stop/status
+frequent-cron start myservice
+frequent-cron status
+frequent-cron stop myservice
 
-4. Optionally, enable auto-start on boot:
-   ```bash
-   sudo update-rc.d frequent_service defaults
-   ```
+# View logs
+frequent-cron logs myservice
 
-5. To stop:
-   ```bash
-   sudo /etc/init.d/frequent_service stop
-   ```
+# Remove (also removes the systemd unit)
+frequent-cron remove myservice
+```
 
-## Running as a systemd Service
+## Manual systemd Setup
+
+If you prefer to manage the unit file yourself:
 
 1. Create a unit file at `/etc/systemd/system/frequent-cron.service`:
 
@@ -59,7 +57,7 @@ sudo make install
 
    [Service]
    Type=forking
-   ExecStart=/usr/local/bin/frequent-cron --frequency=1000 --command=/path/to/your/script.sh --pid-file=/var/run/frequent-cron.pid
+   ExecStart=/usr/local/bin/frequent-cron run --frequency=1000 --command=/path/to/your/script.sh --pid-file=/var/run/frequent-cron.pid
    PIDFile=/var/run/frequent-cron.pid
    Restart=on-failure
 
@@ -78,3 +76,14 @@ sudo make install
    ```bash
    sudo systemctl stop frequent-cron
    ```
+
+## Legacy init.d Setup
+
+An init.d script template is available at `init_script.tpl` in the repository root. Copy and configure it:
+
+```bash
+sudo cp init_script.tpl /etc/init.d/frequent_service
+# Edit COMMAND, FREQUENCY, and PIDFILE
+sudo chmod +x /etc/init.d/frequent_service
+sudo /etc/init.d/frequent_service start
+```
