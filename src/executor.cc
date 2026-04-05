@@ -1,17 +1,14 @@
-#ifdef _WIN32
-    #include <process.h>
-    #include <windows.h>
-#else
-    #include <sys/types.h>
-    #include <sys/wait.h>
-    #include <unistd.h>
-#endif
-
 #include "executor.h"
 #include "process.h"
 
 #include <iostream>
 #include <cstdlib>
+
+#ifndef _WIN32
+    #include <sys/types.h>
+    #include <sys/wait.h>
+    #include <unistd.h>
+#endif
 
 Executor::Executor( const std::string& command, int frequency_ms, bool synchronous )
     : command_(command)
@@ -88,7 +85,6 @@ void Executor::execute_async(){
     if( fork_result == 0 ){
         if( output_callback_ ){
             auto result = run_process( command_ );
-            // Can't call callback from child -- write to stdout instead
             if( !result.stdout_data.empty() ){
                 fputs(result.stdout_data.c_str(), stdout);
             }

@@ -1,4 +1,11 @@
 cmake_minimum_required(VERSION "3.14")
+
+# Suppress CMake dev warnings
+cmake_policy(SET CMP0135 NEW)
+if(POLICY CMP0167)
+    cmake_policy(SET CMP0167 OLD)
+endif()
+
 set(MAIN_EXECUTABLE frequent-cron)
 
 project(${MAIN_EXECUTABLE} CXX C)
