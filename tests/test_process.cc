@@ -13,9 +13,10 @@ TEST(Process, CapturesExitCode) {
 }
 
 TEST(Process, CapturesStderr) {
-    // stderr is redirected to stdout via 2>&1 in run_process
+    // run_process appends "2>&1" so stderr should appear in stdout_data
 #ifdef _WIN32
-    auto result = run_process("cmd /c echo error 1>&2");
+    // Use PowerShell to write directly to stderr
+    auto result = run_process("powershell -Command \"[Console]::Error.WriteLine('error')\"");
 #else
     auto result = run_process("sh -c 'echo error 1>&2'");
 #endif
