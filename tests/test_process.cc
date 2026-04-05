@@ -14,8 +14,11 @@ TEST(Process, CapturesExitCode) {
 
 TEST(Process, CapturesStderr) {
     // stderr is redirected to stdout via 2>&1 in run_process
-    // Use a subshell to ensure ordering
+#ifdef _WIN32
+    auto result = run_process("cmd /c echo error 1>&2");
+#else
     auto result = run_process("sh -c 'echo error 1>&2'");
+#endif
     EXPECT_NE(result.stdout_data.find("error"), std::string::npos);
 }
 
