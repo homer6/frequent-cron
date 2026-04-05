@@ -6,6 +6,8 @@
 #ifdef _WIN32
     #define popen _popen
     #define pclose _pclose
+#else
+    #include <sys/wait.h>
 #endif
 
 ProcessResult run_process( const std::string& command ){
