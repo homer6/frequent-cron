@@ -27,4 +27,4 @@ Standard Unix cron only supports minute-level scheduling. frequent-cron fills th
 - High-frequency data collection
 - Any task that needs to run more often than once per minute
 
-frequent-cron has been production-stable for 15+ years. Starting with v0.3.0, it also works as a **service manager** -- register named services, start/stop them, view logs, and let the OS supervise them natively via systemd, launchd, or the Windows Service Control Manager.
+frequent-cron has been production-stable for 15+ years. Starting with v0.3.0, it also works as a **service manager** -- register named services, start/stop them, view logs, and let the OS supervise them natively via systemd, launchd, rc.d, or the Windows Service Control Manager.
