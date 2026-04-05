@@ -1,7 +1,7 @@
+#include "executor.h"
 #include "config.h"
 #include "daemonize.h"
 #include "pid_file.h"
-#include "executor.h"
 #include "data_dir.h"
 #include "service_registry.h"
 
