@@ -17,6 +17,8 @@ A lightweight daemon and service manager for running shell commands at milliseco
 - [Troubleshooting](Troubleshooting)
 - [Contributing](Contributing)
 - [Release Notes](Release-Notes)
+- [Migrating v0.1 to v0.2](Migrating-v0.1-to-v0.2)
+- [Migrating v0.2 to v0.3](Migrating-v0.2-to-v0.3)
 
 ## What is frequent-cron?
 
