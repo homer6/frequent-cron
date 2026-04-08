@@ -91,3 +91,15 @@ frequent-cron remove myservice
 - PRs target release branches, not main. Main is updated when cutting releases.
 - For fixes spanning multiple release branches, create separate branches and PRs for each.
 - Do not add `Co-Authored-By` trailers to commits.
+
+## Release Process
+
+1. Merge feature/fix PRs into the target release branch (e.g. `0.3`).
+2. Create an annotated tag on the release branch: `git tag v0.3.1 origin/0.3`.
+3. Push the tag: `git push origin v0.3.1`.
+4. Write release notes in `docs/releases/v0.3.1.md` and update `docs/wiki/Release-Notes.md`.
+5. Commit release notes on a feature branch, PR into the release branch, merge.
+6. Merge the latest release branch into main: `git checkout main && git merge 0.3`.
+7. Push main.
+
+Tags are cut from release branches, not main. Main always reflects the latest stable release.
