@@ -26,6 +26,12 @@ add_executable( test_log_manager test_log_manager.cc )
 target_link_libraries( test_log_manager ${CMAKE_PROJECT_NAME}_lib GTest::gtest_main )
 gtest_discover_tests( test_log_manager )
 
+if(NOT WIN32)
+    add_executable( test_daemonize test_daemonize.cc )
+    target_link_libraries( test_daemonize ${CMAKE_PROJECT_NAME}_lib GTest::gtest_main )
+    gtest_discover_tests( test_daemonize )
+endif()
+
 # Integration tests (shell-based)
 if(WIN32)
     add_test(NAME integration_tests

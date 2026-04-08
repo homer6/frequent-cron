@@ -10,6 +10,7 @@ bool daemonize(){
 #else
 
 #include <unistd.h>
+#include <fcntl.h>
 
 bool daemonize(){
     pid_t pid = fork();
@@ -21,9 +22,20 @@ bool daemonize(){
     }
     setsid();
     chdir("/");
-    close(STDIN_FILENO);
-    close(STDOUT_FILENO);
-    close(STDERR_FILENO);
+
+    // Redirect stdin/stdout/stderr to /dev/null rather than closing them.
+    // Closing FDs 0-2 violates POSIX: child processes launched via system()
+    // inherit closed FDs, causing backgrounded commands (&) to silently fail.
+    // This matches the behavior of daemon(0, 0).
+    // See: https://github.com/homer6/frequent-cron/issues/17
+    int fd = open("/dev/null", O_RDWR);
+    if( fd != -1 ){
+        dup2(fd, STDIN_FILENO);
+        dup2(fd, STDOUT_FILENO);
+        dup2(fd, STDERR_FILENO);
+        if( fd > 2 ) close(fd);
+    }
+
     return true;
 }
 

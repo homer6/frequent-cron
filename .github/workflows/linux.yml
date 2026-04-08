@@ -2,9 +2,9 @@ name: Linux
 
 on:
   push:
-    branches: [main]
+    branches: [main, '0.*']
   pull_request:
-    branches: [main]
+    branches: [main, '0.*']
 
 jobs:
   build:
