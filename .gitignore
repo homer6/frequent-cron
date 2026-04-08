@@ -28,10 +28,10 @@ bin/
 googletest-prefix/
 
 # Test binaries
-tests/test_config
-tests/test_pid_file
-tests/test_executor
-tests/test_daemonize
+tests/test_*
+!tests/test_*.cc
+!tests/test_*.ps1
+!tests/test_*.sh
 
 # GTest discovery artifacts
 tests/cmake_test_discovery_*.json
