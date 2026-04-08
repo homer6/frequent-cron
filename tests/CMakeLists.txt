@@ -10,6 +10,12 @@ add_executable( test_executor test_executor.cc )
 target_link_libraries( test_executor ${CMAKE_PROJECT_NAME}_lib GTest::gtest_main )
 gtest_discover_tests( test_executor )
 
+if(NOT WIN32)
+    add_executable( test_daemonize test_daemonize.cc )
+    target_link_libraries( test_daemonize ${CMAKE_PROJECT_NAME}_lib GTest::gtest_main )
+    gtest_discover_tests( test_daemonize )
+endif()
+
 # Integration tests (shell-based)
 if(WIN32)
     add_test(NAME integration_tests
