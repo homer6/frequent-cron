@@ -12,6 +12,25 @@ make test ARGS="--output-on-failure"
 
 GTest is fetched automatically via CMake FetchContent.
 
+## Branches and Releases
+
+Release branches hold the latest patch for each minor version:
+
+| Branch | Version Line | Description |
+|---|---|---|
+| [`0.1`](https://github.com/homer6/frequent-cron/tree/0.1) | v0.1.x | Original Linux daemon |
+| [`0.2`](https://github.com/homer6/frequent-cron/tree/0.2) | v0.2.x | Cross-platform, modern C++ |
+| [`0.3`](https://github.com/homer6/frequent-cron/tree/0.3) | v0.3.x | Service manager |
+| `main` | latest stable | Mirrors the latest release branch after a release is cut |
+
+**Workflow:**
+1. Create a feature/fix branch off the appropriate release branch (e.g. `fix/my-bug` off `0.3`).
+2. Open a PR targeting the release branch.
+3. After merge, tag the release (e.g. `v0.3.1`) on the release branch.
+4. Merge the release branch into `main`.
+
+For fixes that apply to multiple versions, create separate branches and PRs for each release branch.
+
 ## Project Structure
 
 ```
