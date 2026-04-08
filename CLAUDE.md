@@ -82,3 +82,12 @@ frequent-cron logs myservice
 frequent-cron stop myservice
 frequent-cron remove myservice
 ```
+
+## Git Workflow
+
+- Never commit directly to main. All work goes on feature branches with PRs.
+- Release branches (`0.1`, `0.2`, `0.3`) hold the latest patch for each minor version.
+- Feature/fix branches are created off the appropriate release branch.
+- PRs target release branches, not main. Main is updated when cutting releases.
+- For fixes spanning multiple release branches, create separate branches and PRs for each.
+- Do not add `Co-Authored-By` trailers to commits.
