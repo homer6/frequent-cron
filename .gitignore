@@ -35,6 +35,7 @@ tests/test_data_dir
 tests/test_database
 tests/test_process
 tests/test_log_manager
+tests/test_daemonize
 
 # GTest discovery artifacts
 tests/cmake_test_discovery_*.json
