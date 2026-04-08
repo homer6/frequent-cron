@@ -54,7 +54,7 @@ make test ARGS="--output-on-failure -R Database"
 
 ## Platform Notes
 
-- Use `#ifdef _WIN32` / `#elif defined(__APPLE__)` / `#else` for platform-specific code
+- Use `#ifdef _WIN32` / `#elif defined(__APPLE__)` / `#elif defined(__FreeBSD__)` / `#else` for platform-specific code
 - Test on all three platforms via CI before submitting a PR
 - Windows requires `WIN32_LEAN_AND_MEAN` before `<windows.h>` and `NOMINMAX` to avoid macro conflicts
 - macOS uses `_NSGetExecutablePath()` for binary path detection; Linux uses `/proc/self/exe`

@@ -85,6 +85,7 @@ frequent-cron remove myservice
 The `install` command also creates platform-native service definitions:
 - **Linux**: systemd unit files
 - **macOS**: launchd plists
+- **FreeBSD**: rc.d scripts
 - **Windows**: Windows Service (SCM) entries
 
 ### Command-Line Options

@@ -17,7 +17,7 @@ frequent-cron install db-checker --frequency=5000 --command="/opt/scripts/check-
 
 This does two things:
 1. Creates a record in the SQLite database
-2. Generates a platform-native service definition (systemd unit, launchd plist, or Windows Service)
+2. Generates a platform-native service definition (systemd unit, launchd plist, rc.d script, or Windows Service)
 
 ### Start and Stop
 
@@ -65,6 +65,8 @@ Services are tracked in a SQLite database stored in the platform data directory:
 | Linux (user) | `~/.local/share/frequent-cron/` |
 | Linux (root) | `/var/lib/frequent-cron/` |
 | macOS | `~/Library/Application Support/frequent-cron/` |
+| FreeBSD (user) | `~/.local/share/frequent-cron/` |
+| FreeBSD (root) | `/var/lib/frequent-cron/` |
 | Windows | `%LOCALAPPDATA%\frequent-cron\` |
 
 Override with `--data-dir`:

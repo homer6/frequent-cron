@@ -64,6 +64,6 @@ Affects where the SQLite database, logs, and PID files are stored for service ma
 
 | Variable | Platform | Effect |
 |---|---|---|
-| `XDG_DATA_HOME` | Linux | Overrides default data directory base (default: `~/.local/share`) |
+| `XDG_DATA_HOME` | Linux, FreeBSD | Overrides default data directory base (default: `~/.local/share`) |
 | `HOME` | POSIX | Used to resolve data directory when XDG_DATA_HOME is not set |
 | `LOCALAPPDATA` | Windows | Used for data directory (default: `C:\Users\<user>\AppData\Local`) |

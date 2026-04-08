@@ -50,7 +50,7 @@ Yes. Commands are executed via the system shell (`/bin/sh -c` on POSIX, `cmd.exe
 ### Where is the database stored?
 
 In the platform data directory:
-- Linux: `~/.local/share/frequent-cron/frequent-cron.db`
+- Linux/FreeBSD: `~/.local/share/frequent-cron/frequent-cron.db`
 - macOS: `~/Library/Application Support/frequent-cron/frequent-cron.db`
 - Windows: `%LOCALAPPDATA%\frequent-cron\frequent-cron.db`
 
@@ -64,7 +64,7 @@ frequent-cron start svc --data-dir=/shared/fc
 
 ### What happens if the process dies unexpectedly?
 
-The `status` command checks whether the tracked PID is actually alive. If the process died, it updates the database to `stopped`. If you installed with a platform service (systemd/launchd), the OS will auto-restart it based on the service configuration.
+The `status` command checks whether the tracked PID is actually alive. If the process died, it updates the database to `stopped`. If you installed with a platform service (systemd/launchd/rc.d), the OS will auto-restart it based on the service configuration.
 
 ## Platform
 

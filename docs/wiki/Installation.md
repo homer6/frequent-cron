@@ -40,6 +40,21 @@ make test
 sudo make install
 ```
 
+## FreeBSD
+
+```bash
+pkg install cmake boost-all sqlite3
+```
+
+```bash
+git clone https://github.com/homer6/frequent-cron.git
+cd frequent-cron
+cmake .
+make -j$(sysctl -n hw.ncpu)
+make test
+make install
+```
+
 ## Windows (vcpkg + Visual Studio)
 
 Prerequisites:
