@@ -29,6 +29,7 @@ static po::options_description make_run_options(){
         ( "jitter", po::value<int>(), "Maximum timing variance in milliseconds. The actual interval is frequency +/- jitter." )
         ( "jitter-distribution", po::value<std::string>(), "Distribution for jitter: 'uniform' or 'normal'. Defaults to 'uniform'." )
         ( "fire-probability", po::value<double>(), "Probability of firing on each tick (0.0-1.0). Defaults to 1.0." )
+        ( "service-name", po::value<std::string>(), "Service name for log capture (set automatically by 'start')." )
     ;
     return desc;
 }
@@ -115,6 +116,10 @@ static ParseOutput parse_run_args( int argc, char** argv, Subcommand subcmd ){
         if( vm.count("pid-file") ){
             output.config.pid_filename = vm["pid-file"].as<std::string>();
             output.config.has_pid_file = true;
+        }
+
+        if( vm.count("service-name") ){
+            output.config.service_name = vm["service-name"].as<std::string>();
         }
 
         parse_common_options( vm, output.config );

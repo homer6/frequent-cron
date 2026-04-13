@@ -3,10 +3,12 @@
 #include "daemonize.h"
 #include "pid_file.h"
 #include "data_dir.h"
+#include "log_manager.h"
 #include "service_registry.h"
 
 #include <iostream>
 #include <filesystem>
+#include <memory>
 
 static int cmd_run( const Config& config ){
 
@@ -34,8 +36,32 @@ static int cmd_run( const Config& config ){
         }
     }
 
+    // Set up log capture when running as a managed service
+    std::shared_ptr<LogManager> log_mgr;
+    if( !config.service_name.empty() ){
+        auto dir = config.data_dir.empty()
+            ? data_dir::get_default()
+            : std::filesystem::path(config.data_dir);
+        data_dir::ensure_exists(dir);
+        auto log_dir = dir / "logs";
+        std::filesystem::create_directories(log_dir);
+        log_mgr = std::make_shared<LogManager>(
+            log_dir,
+            static_cast<size_t>(config.log_max_size_mb) * 1024 * 1024,
+            config.log_max_files
+        );
+    }
+
     Executor executor( config.command, config.frequency, config.synchronous,
                        config.jitter_ms, config.jitter_distribution, config.fire_probability );
+
+    if( log_mgr ){
+        auto name = config.service_name;
+        executor.set_output_callback( [log_mgr, name]( const std::string& output ){
+            log_mgr->write( name, output );
+        });
+    }
+
     executor.run();
     return 0;
 }

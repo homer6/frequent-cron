@@ -203,7 +203,9 @@ int ServiceRegistry::cmd_start( const std::string& name ){
         << " run"
         << " --frequency=" << service->frequency_ms
         << " --command=\"" << service->command << "\""
-        << " --pid-file=\"" << pid_path.string() << "\"";
+        << " --pid-file=\"" << pid_path.string() << "\""
+        << " --service-name=" << name
+        << " --data-dir=\"" << data_dir_.string() << "\"";
 
     if( !service->synchronous ){
         cmd << " --synchronous=false";
