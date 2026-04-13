@@ -111,6 +111,9 @@ int ServiceRegistry::cmd_install( const Config& config ){
     rec.command = config.command;
     rec.frequency_ms = config.frequency;
     rec.synchronous = config.synchronous;
+    rec.jitter_ms = config.jitter_ms;
+    rec.jitter_distribution = config.jitter_distribution;
+    rec.fire_probability = config.fire_probability;
 
     if( !db_.insert_service(rec) ){
         std::cerr << "Failed to install service '" << config.service_name << "'.\n";
@@ -126,6 +129,12 @@ int ServiceRegistry::cmd_install( const Config& config ){
     std::cout << "  command:     " << config.command << "\n";
     std::cout << "  frequency:   " << config.frequency << "ms\n";
     std::cout << "  synchronous: " << (config.synchronous ? "true" : "false") << "\n";
+    if( config.jitter_ms > 0 ){
+        std::cout << "  jitter:      +-" << config.jitter_ms << "ms (" << config.jitter_distribution << ")\n";
+    }
+    if( config.fire_probability < 1.0 ){
+        std::cout << "  probability: " << config.fire_probability << "\n";
+    }
     return 0;
 }
 
@@ -194,10 +203,21 @@ int ServiceRegistry::cmd_start( const std::string& name ){
         << " run"
         << " --frequency=" << service->frequency_ms
         << " --command=\"" << service->command << "\""
-        << " --pid-file=\"" << pid_path.string() << "\"";
+        << " --pid-file=\"" << pid_path.string() << "\""
+        << " --service-name=" << name
+        << " --data-dir=\"" << data_dir_.string() << "\"";
 
     if( !service->synchronous ){
         cmd << " --synchronous=false";
+    }
+
+    if( service->jitter_ms > 0 ){
+        cmd << " --jitter=" << service->jitter_ms;
+        cmd << " --jitter-distribution=" << service->jitter_distribution;
+    }
+
+    if( service->fire_probability < 1.0 ){
+        cmd << " --fire-probability=" << service->fire_probability;
     }
 
     // Launch in background
@@ -370,6 +390,12 @@ int ServiceRegistry::cmd_status( const std::string& name ){
     std::cout << "Command:     " << service->command << "\n";
     std::cout << "Frequency:   " << service->frequency_ms << "ms\n";
     std::cout << "Synchronous: " << (service->synchronous ? "true" : "false") << "\n";
+    if( service->jitter_ms > 0 ){
+        std::cout << "Jitter:      +-" << service->jitter_ms << "ms (" << service->jitter_distribution << ")\n";
+    }
+    if( service->fire_probability < 1.0 ){
+        std::cout << "Probability: " << service->fire_probability << "\n";
+    }
     std::cout << "Created:     " << service->created_at << "\n";
     if( state ){
         if( !state->last_started_at.empty() )

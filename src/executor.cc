@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <cstdlib>
+#include <cmath>
 
 #ifndef _WIN32
     #include <sys/types.h>
@@ -10,10 +11,16 @@
     #include <unistd.h>
 #endif
 
-Executor::Executor( const std::string& command, int frequency_ms, bool synchronous )
+Executor::Executor( const std::string& command, int frequency_ms, bool synchronous,
+                    int jitter_ms, const std::string& jitter_distribution,
+                    double fire_probability )
     : command_(command)
     , frequency_(frequency_ms)
     , synchronous_(synchronous)
+    , jitter_ms_(jitter_ms)
+    , jitter_distribution_(jitter_distribution)
+    , fire_probability_(fire_probability)
+    , rng_(std::random_device{}())
     , io_context_(std::make_shared<boost::asio::io_context>())
     , timer_(std::make_shared<boost::asio::steady_timer>(*io_context_, frequency_))
 {
@@ -32,8 +39,43 @@ void Executor::set_output_callback( OutputCallback callback ){
     output_callback_ = std::move(callback);
 }
 
+std::chrono::milliseconds Executor::compute_next_delay(){
+
+    if( jitter_ms_ <= 0 ){
+        return frequency_;
+    }
+
+    int offset = 0;
+    if( jitter_distribution_ == "normal" ){
+        std::normal_distribution<double> dist(0.0, static_cast<double>(jitter_ms_));
+        offset = static_cast<int>(std::round(dist(rng_)));
+        // Clamp to [-jitter_ms_, +jitter_ms_] (3-sigma can exceed range)
+        offset = std::max(-jitter_ms_, std::min(jitter_ms_, offset));
+    }else{
+        std::uniform_int_distribution<int> dist(-jitter_ms_, jitter_ms_);
+        offset = dist(rng_);
+    }
+
+    int delay = frequency_.count() + offset;
+    if( delay < 1 ) delay = 1;
+    return std::chrono::milliseconds(delay);
+}
+
+bool Executor::should_fire(){
+
+    if( fire_probability_ >= 1.0 ){
+        return true;
+    }
+    if( fire_probability_ <= 0.0 ){
+        return false;
+    }
+
+    std::uniform_real_distribution<double> dist(0.0, 1.0);
+    return dist(rng_) < fire_probability_;
+}
+
 void Executor::register_callback(){
-    timer_->expires_after( frequency_ );
+    timer_->expires_after( compute_next_delay() );
     timer_->async_wait( [this]( const boost::system::error_code& error ){
         timer_callback(error);
     });
@@ -46,6 +88,11 @@ void Executor::timer_callback( const boost::system::error_code& error ){
     }else if( error ){
         return;
     }else{
+        if( !should_fire() ){
+            skip_count_++;
+            register_callback();
+            return;
+        }
         execution_count_++;
         if( synchronous_ ){
             execute_sync();

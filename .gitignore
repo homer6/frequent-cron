@@ -5,8 +5,9 @@ Makefile
 cmake_install.cmake
 CTestTestfile.cmake
 Testing/
-frequent-cron
-frequent-cron.exe
+/frequent-cron
+/frequent-cron.exe
+/install_manifest.txt
 
 # Library artifacts
 *.a

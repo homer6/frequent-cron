@@ -43,10 +43,25 @@ void Database::ensure_schema(){
             command TEXT NOT NULL,
             frequency_ms INTEGER NOT NULL,
             synchronous INTEGER NOT NULL DEFAULT 1,
+            jitter_ms INTEGER NOT NULL DEFAULT 0,
+            jitter_distribution TEXT NOT NULL DEFAULT 'uniform',
+            fire_probability REAL NOT NULL DEFAULT 1.0,
             created_at TEXT NOT NULL DEFAULT (datetime('now')),
             updated_at TEXT NOT NULL DEFAULT (datetime('now'))
         )
     )");
+
+    // Migrate existing databases: add new columns if they don't exist
+    // SQLite ADD COLUMN is a no-op if column already exists when using IF NOT EXISTS... but
+    // SQLite doesn't support IF NOT EXISTS for ALTER TABLE ADD COLUMN, so we catch errors.
+    auto try_add_column = [this]( const std::string& sql ){
+        char* err = nullptr;
+        sqlite3_exec( db_, sql.c_str(), nullptr, nullptr, &err );
+        sqlite3_free(err);  // Ignore "duplicate column" errors
+    };
+    try_add_column("ALTER TABLE services ADD COLUMN jitter_ms INTEGER NOT NULL DEFAULT 0");
+    try_add_column("ALTER TABLE services ADD COLUMN jitter_distribution TEXT NOT NULL DEFAULT 'uniform'");
+    try_add_column("ALTER TABLE services ADD COLUMN fire_probability REAL NOT NULL DEFAULT 1.0");
 
     exec(R"(
         CREATE TABLE IF NOT EXISTS service_state (
@@ -62,7 +77,7 @@ void Database::ensure_schema(){
 
 bool Database::insert_service( const ServiceRecord& record ){
 
-    const char* sql = "INSERT INTO services (name, command, frequency_ms, synchronous) VALUES (?, ?, ?, ?)";
+    const char* sql = "INSERT INTO services (name, command, frequency_ms, synchronous, jitter_ms, jitter_distribution, fire_probability) VALUES (?, ?, ?, ?, ?, ?, ?)";
     sqlite3_stmt* stmt = nullptr;
 
     if( sqlite3_prepare_v2(db_, sql, -1, &stmt, nullptr) != SQLITE_OK ){
@@ -73,6 +88,9 @@ bool Database::insert_service( const ServiceRecord& record ){
     sqlite3_bind_text( stmt, 2, record.command.c_str(), -1, SQLITE_TRANSIENT );
     sqlite3_bind_int( stmt, 3, record.frequency_ms );
     sqlite3_bind_int( stmt, 4, record.synchronous ? 1 : 0 );
+    sqlite3_bind_int( stmt, 5, record.jitter_ms );
+    sqlite3_bind_text( stmt, 6, record.jitter_distribution.c_str(), -1, SQLITE_TRANSIENT );
+    sqlite3_bind_double( stmt, 7, record.fire_probability );
 
     bool ok = sqlite3_step(stmt) == SQLITE_DONE;
     sqlite3_finalize(stmt);
@@ -108,7 +126,7 @@ bool Database::remove_service( const std::string& name ){
 
 std::optional<ServiceRecord> Database::get_service( const std::string& name ){
 
-    const char* sql = "SELECT name, command, frequency_ms, synchronous, created_at, updated_at FROM services WHERE name = ?";
+    const char* sql = "SELECT name, command, frequency_ms, synchronous, jitter_ms, jitter_distribution, fire_probability, created_at, updated_at FROM services WHERE name = ?";
     sqlite3_stmt* stmt = nullptr;
 
     if( sqlite3_prepare_v2(db_, sql, -1, &stmt, nullptr) != SQLITE_OK ){
@@ -124,8 +142,12 @@ std::optional<ServiceRecord> Database::get_service( const std::string& name ){
         rec.command = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
         rec.frequency_ms = sqlite3_column_int(stmt, 2);
         rec.synchronous = sqlite3_column_int(stmt, 3) != 0;
-        rec.created_at = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
-        rec.updated_at = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
+        rec.jitter_ms = sqlite3_column_int(stmt, 4);
+        const char* dist_text = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
+        rec.jitter_distribution = dist_text ? dist_text : "uniform";
+        rec.fire_probability = sqlite3_column_double(stmt, 6);
+        rec.created_at = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 7));
+        rec.updated_at = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 8));
         result = rec;
     }
 
@@ -135,7 +157,7 @@ std::optional<ServiceRecord> Database::get_service( const std::string& name ){
 
 std::vector<ServiceRecord> Database::list_services(){
 
-    const char* sql = "SELECT name, command, frequency_ms, synchronous, created_at, updated_at FROM services ORDER BY name";
+    const char* sql = "SELECT name, command, frequency_ms, synchronous, jitter_ms, jitter_distribution, fire_probability, created_at, updated_at FROM services ORDER BY name";
     sqlite3_stmt* stmt = nullptr;
     std::vector<ServiceRecord> results;
 
@@ -149,8 +171,12 @@ std::vector<ServiceRecord> Database::list_services(){
         rec.command = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
         rec.frequency_ms = sqlite3_column_int(stmt, 2);
         rec.synchronous = sqlite3_column_int(stmt, 3) != 0;
-        rec.created_at = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
-        rec.updated_at = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
+        rec.jitter_ms = sqlite3_column_int(stmt, 4);
+        const char* dist_text = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5));
+        rec.jitter_distribution = dist_text ? dist_text : "uniform";
+        rec.fire_probability = sqlite3_column_double(stmt, 6);
+        rec.created_at = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 7));
+        rec.updated_at = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 8));
         results.push_back(rec);
     }
 
@@ -160,7 +186,7 @@ std::vector<ServiceRecord> Database::list_services(){
 
 bool Database::update_service( const ServiceRecord& record ){
 
-    const char* sql = "UPDATE services SET command = ?, frequency_ms = ?, synchronous = ?, updated_at = datetime('now') WHERE name = ?";
+    const char* sql = "UPDATE services SET command = ?, frequency_ms = ?, synchronous = ?, jitter_ms = ?, jitter_distribution = ?, fire_probability = ?, updated_at = datetime('now') WHERE name = ?";
     sqlite3_stmt* stmt = nullptr;
 
     if( sqlite3_prepare_v2(db_, sql, -1, &stmt, nullptr) != SQLITE_OK ){
@@ -170,7 +196,10 @@ bool Database::update_service( const ServiceRecord& record ){
     sqlite3_bind_text( stmt, 1, record.command.c_str(), -1, SQLITE_TRANSIENT );
     sqlite3_bind_int( stmt, 2, record.frequency_ms );
     sqlite3_bind_int( stmt, 3, record.synchronous ? 1 : 0 );
-    sqlite3_bind_text( stmt, 4, record.name.c_str(), -1, SQLITE_TRANSIENT );
+    sqlite3_bind_int( stmt, 4, record.jitter_ms );
+    sqlite3_bind_text( stmt, 5, record.jitter_distribution.c_str(), -1, SQLITE_TRANSIENT );
+    sqlite3_bind_double( stmt, 6, record.fire_probability );
+    sqlite3_bind_text( stmt, 7, record.name.c_str(), -1, SQLITE_TRANSIENT );
 
     bool ok = sqlite3_step(stmt) == SQLITE_DONE && sqlite3_changes(db_) > 0;
     sqlite3_finalize(stmt);

@@ -12,6 +12,9 @@ struct ServiceRecord {
     std::string command;
     int frequency_ms = 0;
     bool synchronous = true;
+    int jitter_ms = 0;
+    std::string jitter_distribution = "uniform";  // "uniform" or "normal"
+    double fire_probability = 1.0;
     std::string created_at;
     std::string updated_at;
 };

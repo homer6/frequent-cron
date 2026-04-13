@@ -45,6 +45,15 @@ public:
             unit << " --synchronous=false";
         }
 
+        if( record.jitter_ms > 0 ){
+            unit << " --jitter=" << record.jitter_ms
+                 << " --jitter-distribution=" << record.jitter_distribution;
+        }
+
+        if( record.fire_probability < 1.0 ){
+            unit << " --fire-probability=" << record.fire_probability;
+        }
+
         unit << "\n"
              << "PIDFile=" << pid_path.string() << "\n"
              << "Restart=on-failure\n"
@@ -148,6 +157,15 @@ public:
             plist << "        <string>--synchronous=false</string>\n";
         }
 
+        if( record.jitter_ms > 0 ){
+            plist << "        <string>--jitter=" << record.jitter_ms << "</string>\n"
+                  << "        <string>--jitter-distribution=" << record.jitter_distribution << "</string>\n";
+        }
+
+        if( record.fire_probability < 1.0 ){
+            plist << "        <string>--fire-probability=" << record.fire_probability << "</string>\n";
+        }
+
         plist << "    </array>\n"
               << "    <key>RunAtLoad</key>\n"
               << "    <true/>\n"
@@ -239,6 +257,15 @@ public:
 
         if( !record.synchronous ){
             cmd << " --synchronous=false";
+        }
+
+        if( record.jitter_ms > 0 ){
+            cmd << " --jitter=" << record.jitter_ms
+                << " --jitter-distribution=" << record.jitter_distribution;
+        }
+
+        if( record.fire_probability < 1.0 ){
+            cmd << " --fire-probability=" << record.fire_probability;
         }
 
         std::string svc_name = get_service_name(name);
@@ -355,6 +382,15 @@ public:
 
         if( !record.synchronous ){
             script << " --synchronous=false";
+        }
+
+        if( record.jitter_ms > 0 ){
+            script << " --jitter=" << record.jitter_ms
+                   << " --jitter-distribution=" << record.jitter_distribution;
+        }
+
+        if( record.fire_probability < 1.0 ){
+            script << " --fire-probability=" << record.fire_probability;
         }
 
         script << "\"\n"

@@ -26,6 +26,10 @@ static po::options_description make_run_options(){
         ( "pid-file", po::value<std::string>(), "The file that this daemon will write the process ID to." )
         ( "synchronous", po::value<std::string>()->implicit_value("true"), "Whether calling the command blocks subsequent calls. Defaults to true." )
         ( "data-dir", po::value<std::string>(), "Override the data directory path." )
+        ( "jitter", po::value<int>(), "Maximum timing variance in milliseconds. The actual interval is frequency +/- jitter." )
+        ( "jitter-distribution", po::value<std::string>(), "Distribution for jitter: 'uniform' or 'normal'. Defaults to 'uniform'." )
+        ( "fire-probability", po::value<double>(), "Probability of firing on each tick (0.0-1.0). Defaults to 1.0." )
+        ( "service-name", po::value<std::string>(), "Service name for log capture (set automatically by 'start')." )
     ;
     return desc;
 }
@@ -38,6 +42,9 @@ static po::options_description make_install_options(){
         ( "command", po::value<std::string>(), "The shell command that the cron will run every frequency." )
         ( "synchronous", po::value<std::string>()->implicit_value("true"), "Whether calling the command blocks subsequent calls. Defaults to true." )
         ( "data-dir", po::value<std::string>(), "Override the data directory path." )
+        ( "jitter", po::value<int>(), "Maximum timing variance in milliseconds. The actual interval is frequency +/- jitter." )
+        ( "jitter-distribution", po::value<std::string>(), "Distribution for jitter: 'uniform' or 'normal'. Defaults to 'uniform'." )
+        ( "fire-probability", po::value<double>(), "Probability of firing on each tick (0.0-1.0). Defaults to 1.0." )
     ;
     return desc;
 }
@@ -60,6 +67,15 @@ static void parse_common_options( const po::variables_map& vm, Config& config ){
         if( val != "true" && val != "True" && val != "TRUE" && val != "1" ){
             config.synchronous = false;
         }
+    }
+    if( vm.count("jitter") ){
+        config.jitter_ms = vm["jitter"].as<int>();
+    }
+    if( vm.count("jitter-distribution") ){
+        config.jitter_distribution = vm["jitter-distribution"].as<std::string>();
+    }
+    if( vm.count("fire-probability") ){
+        config.fire_probability = vm["fire-probability"].as<double>();
     }
 }
 
@@ -100,6 +116,10 @@ static ParseOutput parse_run_args( int argc, char** argv, Subcommand subcmd ){
         if( vm.count("pid-file") ){
             output.config.pid_filename = vm["pid-file"].as<std::string>();
             output.config.has_pid_file = true;
+        }
+
+        if( vm.count("service-name") ){
+            output.config.service_name = vm["service-name"].as<std::string>();
         }
 
         parse_common_options( vm, output.config );
@@ -213,6 +233,26 @@ ParseOutput parse_args( int argc, char** argv ){
     }
 
     std::string first_arg = argv[1];
+
+    // Top-level --help: show full command list
+    if( first_arg == "--help" || first_arg == "-h" ){
+        std::ostringstream oss;
+        oss << "Usage: frequent-cron <command> [options]\n\n"
+            << "A daemon that runs shell commands at millisecond intervals (sub-second cron).\n\n"
+            << "Commands:\n"
+            << "  run       Run a command at the specified frequency\n"
+            << "  install   Register a named service\n"
+            << "  remove    Unregister a named service\n"
+            << "  start     Start a registered service\n"
+            << "  stop      Stop a running service\n"
+            << "  status    Show status of services\n"
+            << "  list      List all registered services\n"
+            << "  logs      Show logs for a service\n"
+            << "\nRun 'frequent-cron <command> --help' for command-specific options.\n";
+        output.result = ParseResult::HELP;
+        output.message = oss.str();
+        return output;
+    }
 
     // Legacy mode: if first arg starts with '-', treat as run
     if( first_arg[0] == '-' ){
