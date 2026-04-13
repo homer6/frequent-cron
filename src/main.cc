@@ -23,9 +23,6 @@ static int cmd_run( const Config& config ){
         std::cout << "PID File was set to " << config.pid_filename << ".\n";
     }
 
-    Executor executor( config.command, config.frequency, config.synchronous,
-                       config.jitter_ms, config.jitter_distribution, config.fire_probability );
-
     if( !daemonize() ){
         std::cerr << "frequent-cron: failed to daemonize.\n";
         return 1;
@@ -37,6 +34,8 @@ static int cmd_run( const Config& config ){
         }
     }
 
+    Executor executor( config.command, config.frequency, config.synchronous,
+                       config.jitter_ms, config.jitter_distribution, config.fire_probability );
     executor.run();
     return 0;
 }
