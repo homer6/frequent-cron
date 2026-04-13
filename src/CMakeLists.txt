@@ -35,6 +35,13 @@ set_target_properties( ${CMAKE_PROJECT_NAME} PROPERTIES
 install( TARGETS ${CMAKE_PROJECT_NAME} DESTINATION bin )
 install( FILES ${CMAKE_SOURCE_DIR}/docs/frequent-cron.1 DESTINATION share/man/man1 )
 
+# Install Claude Code skill to user's personal skills directory
+install( FILES
+    ${CMAKE_SOURCE_DIR}/.claude/skills/frequent-cron/SKILL.md
+    ${CMAKE_SOURCE_DIR}/.claude/skills/frequent-cron/reference.md
+    DESTINATION $ENV{HOME}/.claude/skills/frequent-cron
+)
+
 # Set default compile flags for GCC
 if(CMAKE_COMPILER_IS_GNUCXX)
   message(STATUS "GCC detected, adding compile flags")
