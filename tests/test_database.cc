@@ -170,3 +170,85 @@ TEST_F(DatabaseTest, CascadeDeleteRemovesState) {
     db.remove_service("cascade");
     EXPECT_FALSE(db.get_state("cascade").has_value());
 }
+
+// === Jitter and probability fields ===
+
+TEST_F(DatabaseTest, InsertAndGetServiceWithJitter) {
+    Database db(db_path);
+    ServiceRecord rec;
+    rec.name = "jittery";
+    rec.command = "echo hi";
+    rec.frequency_ms = 5000;
+    rec.jitter_ms = 2000;
+    rec.jitter_distribution = "normal";
+    rec.fire_probability = 0.8;
+
+    EXPECT_TRUE(db.insert_service(rec));
+
+    auto result = db.get_service("jittery");
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->jitter_ms, 2000);
+    EXPECT_EQ(result->jitter_distribution, "normal");
+    EXPECT_DOUBLE_EQ(result->fire_probability, 0.8);
+}
+
+TEST_F(DatabaseTest, DefaultJitterValues) {
+    Database db(db_path);
+    ServiceRecord rec;
+    rec.name = "defaults";
+    rec.command = "echo hi";
+    rec.frequency_ms = 1000;
+
+    EXPECT_TRUE(db.insert_service(rec));
+
+    auto result = db.get_service("defaults");
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->jitter_ms, 0);
+    EXPECT_EQ(result->jitter_distribution, "uniform");
+    EXPECT_DOUBLE_EQ(result->fire_probability, 1.0);
+}
+
+TEST_F(DatabaseTest, UpdateServiceWithJitter) {
+    Database db(db_path);
+    ServiceRecord rec;
+    rec.name = "update-jitter";
+    rec.command = "echo hi";
+    rec.frequency_ms = 1000;
+    db.insert_service(rec);
+
+    rec.jitter_ms = 500;
+    rec.jitter_distribution = "normal";
+    rec.fire_probability = 0.6;
+    EXPECT_TRUE(db.update_service(rec));
+
+    auto result = db.get_service("update-jitter");
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->jitter_ms, 500);
+    EXPECT_EQ(result->jitter_distribution, "normal");
+    EXPECT_DOUBLE_EQ(result->fire_probability, 0.6);
+}
+
+TEST_F(DatabaseTest, ListServicesIncludesJitterFields) {
+    Database db(db_path);
+
+    ServiceRecord a;
+    a.name = "svc-a";
+    a.command = "echo a";
+    a.frequency_ms = 100;
+    a.jitter_ms = 50;
+    a.fire_probability = 0.5;
+    db.insert_service(a);
+
+    ServiceRecord b;
+    b.name = "svc-b";
+    b.command = "echo b";
+    b.frequency_ms = 200;
+    db.insert_service(b);
+
+    auto list = db.list_services();
+    ASSERT_EQ(list.size(), 2u);
+    EXPECT_EQ(list[0].jitter_ms, 50);
+    EXPECT_DOUBLE_EQ(list[0].fire_probability, 0.5);
+    EXPECT_EQ(list[1].jitter_ms, 0);
+    EXPECT_DOUBLE_EQ(list[1].fire_probability, 1.0);
+}
