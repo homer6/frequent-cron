@@ -33,6 +33,7 @@ set_target_properties( ${CMAKE_PROJECT_NAME} PROPERTIES
 )
 
 install( TARGETS ${CMAKE_PROJECT_NAME} DESTINATION bin )
+install( FILES ${CMAKE_SOURCE_DIR}/docs/frequent-cron.1 DESTINATION share/man/man1 )
 
 # Set default compile flags for GCC
 if(CMAKE_COMPILER_IS_GNUCXX)

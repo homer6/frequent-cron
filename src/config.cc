@@ -229,6 +229,26 @@ ParseOutput parse_args( int argc, char** argv ){
 
     std::string first_arg = argv[1];
 
+    // Top-level --help: show full command list
+    if( first_arg == "--help" || first_arg == "-h" ){
+        std::ostringstream oss;
+        oss << "Usage: frequent-cron <command> [options]\n\n"
+            << "A daemon that runs shell commands at millisecond intervals (sub-second cron).\n\n"
+            << "Commands:\n"
+            << "  run       Run a command at the specified frequency\n"
+            << "  install   Register a named service\n"
+            << "  remove    Unregister a named service\n"
+            << "  start     Start a registered service\n"
+            << "  stop      Stop a running service\n"
+            << "  status    Show status of services\n"
+            << "  list      List all registered services\n"
+            << "  logs      Show logs for a service\n"
+            << "\nRun 'frequent-cron <command> --help' for command-specific options.\n";
+        output.result = ParseResult::HELP;
+        output.message = oss.str();
+        return output;
+    }
+
     // Legacy mode: if first arg starts with '-', treat as run
     if( first_arg[0] == '-' ){
         return parse_run_args( argc, argv, Subcommand::LEGACY );

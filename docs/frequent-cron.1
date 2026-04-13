@@ -1,0 +1,152 @@
+.TH FREQUENT-CRON 1 "2026-04-12" "frequent-cron" "User Commands"
+.SH NAME
+frequent-cron \- run shell commands at millisecond intervals
+.SH SYNOPSIS
+.B frequent-cron
+.I command
+.RI [ options ]
+.br
+.B frequent-cron
+.BR \-\-frequency =\fIms\fR
+.BR \-\-command =\fIcmd\fR
+.RI [ options ]
+.SH DESCRIPTION
+.B frequent-cron
+is a daemon and service manager that executes shell commands at sub-second
+intervals. It supports both direct execution (legacy mode) and managed
+services with automatic boot-start integration on Linux (systemd), macOS
+(launchd), FreeBSD (rc.d), and Windows (SCM).
+.SH COMMANDS
+.TP
+.B run
+Run a command at the specified frequency. Requires
+.B \-\-frequency
+and
+.BR \-\-command .
+.TP
+.B install \fIname\fR
+Register a named service. Requires
+.B \-\-frequency
+and
+.BR \-\-command .
+The service is configured to start automatically at boot.
+.TP
+.B remove \fIname\fR
+Unregister a named service and remove its boot-start configuration.
+.TP
+.B start \fIname\fR
+Start a registered service.
+.TP
+.B stop \fIname\fR
+Stop a running service.
+.TP
+.B status \fR[\fIname\fR]
+Show status of all services, or a specific service if
+.I name
+is given.
+.TP
+.B list
+List all registered services.
+.TP
+.B logs \fIname\fR
+Show logs for a service.
+.SH OPTIONS
+.SS Run and Install Options
+.TP
+.BR \-\-frequency =\fIms\fR
+The timer frequency in milliseconds. Required for
+.B run
+and
+.BR install .
+.TP
+.BR \-\-command =\fIcmd\fR
+The shell command to execute every interval. Required for
+.B run
+and
+.BR install .
+.TP
+.BR \-\-synchronous " [=true]"
+Whether each invocation blocks subsequent calls. Defaults to true.
+.TP
+.BR \-\-pid\-file =\fIpath\fR
+Write the daemon process ID to
+.IR path .
+Only available with
+.BR run .
+.TP
+.BR \-\-jitter =\fIms\fR
+Maximum timing variance in milliseconds. The actual interval becomes
+frequency +/\- jitter.
+.TP
+.BR \-\-jitter\-distribution =\fIdist\fR
+Distribution for jitter:
+.B uniform
+or
+.BR normal .
+Defaults to
+.BR uniform .
+.TP
+.BR \-\-fire\-probability =\fIp\fR
+Probability of firing on each tick (0.0\-1.0). Defaults to 1.0.
+.SS Common Options
+.TP
+.BR \-\-data\-dir =\fIpath\fR
+Override the default data directory path.
+.TP
+.B \-\-help
+Display help information.
+.SH LEGACY MODE
+If the first argument starts with a dash, frequent-cron operates in legacy
+mode, equivalent to the
+.B run
+command. This preserves backward compatibility with earlier versions.
+.SH DATA DIRECTORY
+.TP
+.B Linux, FreeBSD
+~/.local/share/frequent\-cron (user) or /var/lib/frequent\-cron (root)
+.TP
+.B macOS
+~/Library/Application Support/frequent\-cron
+.TP
+.B Windows
+%LOCALAPPDATA%\\frequent\-cron
+.PP
+The data directory contains the service database
+.RB ( frequent\-cron.db ),
+log files
+.RB ( logs/ ),
+and PID files
+.RB ( pids/ ).
+.SH EXAMPLES
+.SS Direct execution (legacy mode)
+.nf
+frequent\-cron \-\-frequency=1000 \-\-command="/path/to/script.sh"
+.fi
+.SS Service management
+.nf
+frequent\-cron install myservice \-\-frequency=500 \-\-command="echo tick"
+frequent\-cron start myservice
+frequent\-cron status
+frequent\-cron logs myservice
+frequent\-cron stop myservice
+frequent\-cron remove myservice
+.fi
+.SS With jitter and probability
+.nf
+frequent\-cron run \-\-frequency=1000 \-\-command="./check.sh" \\
+    \-\-jitter=200 \-\-jitter\-distribution=normal \\
+    \-\-fire\-probability=0.8
+.fi
+.SH EXIT STATUS
+.TP
+.B 0
+Success.
+.TP
+.B 1
+Error (invalid arguments, service not found, etc.).
+.SH SEE ALSO
+.BR cron (8),
+.BR systemctl (1),
+.BR launchctl (1)
+.SH AUTHORS
+Steve Sperandeo and contributors.

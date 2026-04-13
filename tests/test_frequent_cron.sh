@@ -65,7 +65,7 @@ echo "=== Argument Parsing (pre-daemon) ==="
 
 # --help prints usage and exits (no daemonization happens)
 $BINARY --help > "$TEST_TMPDIR/help_output.txt" 2>&1 || true
-if grep -q "Options" "$TEST_TMPDIR/help_output.txt"; then
+if grep -q "Commands" "$TEST_TMPDIR/help_output.txt"; then
     pass "--help prints usage"
 else
     fail "--help prints usage"
