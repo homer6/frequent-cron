@@ -125,3 +125,103 @@ TEST_F(ExecutorTest, AsyncAllowsConcurrentExecution) {
     EXPECT_GE(lines, 4);
 }
 #endif
+
+// === Jitter tests ===
+
+TEST_F(ExecutorTest, JitterZeroMatchesBaseFrequency) {
+    std::string cmd = "echo tick >> " + tmp_path;
+    Executor executor(cmd, 100, true, 0);
+
+    std::thread t([&]{ executor.run(); });
+    std::this_thread::sleep_for(std::chrono::milliseconds(550));
+    executor.stop();
+    t.join();
+
+    EXPECT_GE(executor.execution_count(), 3);
+}
+
+TEST_F(ExecutorTest, JitterProducesExecutions) {
+    std::string cmd = "echo tick >> " + tmp_path;
+    Executor executor(cmd, 100, true, 50, "uniform");
+
+    std::thread t([&]{ executor.run(); });
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    executor.stop();
+    t.join();
+
+    // With jitter +-50ms on 100ms base, interval ranges 50-150ms
+    // In 1000ms we expect at least a few executions
+    EXPECT_GE(executor.execution_count(), 3);
+}
+
+TEST_F(ExecutorTest, JitterNormalDistribution) {
+    std::string cmd = "echo tick >> " + tmp_path;
+    Executor executor(cmd, 100, true, 30, "normal");
+
+    std::thread t([&]{ executor.run(); });
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    executor.stop();
+    t.join();
+
+    EXPECT_GE(executor.execution_count(), 3);
+}
+
+// === Probability tests ===
+
+TEST_F(ExecutorTest, ProbabilityOneAlwaysFires) {
+    std::string cmd = "echo tick >> " + tmp_path;
+    Executor executor(cmd, 50, true, 0, "uniform", 1.0);
+
+    std::thread t([&]{ executor.run(); });
+    std::this_thread::sleep_for(std::chrono::milliseconds(350));
+    executor.stop();
+    t.join();
+
+    EXPECT_GE(executor.execution_count(), 3);
+    EXPECT_EQ(executor.skip_count(), 0);
+}
+
+TEST_F(ExecutorTest, ProbabilityZeroNeverFires) {
+    std::string cmd = "echo tick >> " + tmp_path;
+    Executor executor(cmd, 50, true, 0, "uniform", 0.0);
+
+    std::thread t([&]{ executor.run(); });
+    std::this_thread::sleep_for(std::chrono::milliseconds(350));
+    executor.stop();
+    t.join();
+
+    EXPECT_EQ(executor.execution_count(), 0);
+    EXPECT_GE(executor.skip_count(), 3);
+}
+
+TEST_F(ExecutorTest, ProbabilityPartialReducesExecutions) {
+    std::string cmd = "echo tick >> " + tmp_path;
+    // 50% probability with fast frequency -- run many ticks to get statistical significance
+    Executor executor(cmd, 10, true, 0, "uniform", 0.5);
+
+    std::thread t([&]{ executor.run(); });
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    executor.stop();
+    t.join();
+
+    int total = executor.execution_count() + executor.skip_count();
+    EXPECT_GE(total, 20);
+    // Both executions and skips should have occurred
+    EXPECT_GE(executor.execution_count(), 1);
+    EXPECT_GE(executor.skip_count(), 1);
+}
+
+TEST_F(ExecutorTest, JitterAndProbabilityCombined) {
+    std::string cmd = "echo tick >> " + tmp_path;
+    Executor executor(cmd, 100, true, 30, "uniform", 0.5);
+
+    std::thread t([&]{ executor.run(); });
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    executor.stop();
+    t.join();
+
+    int total = executor.execution_count() + executor.skip_count();
+    EXPECT_GE(total, 3);
+    // With 50% probability, expect some skips
+    EXPECT_GE(executor.skip_count(), 1);
+}

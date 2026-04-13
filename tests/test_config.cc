@@ -199,6 +199,55 @@ TEST(Config, DataDirOption) {
     EXPECT_EQ(output.config.data_dir, "/tmp/mydata");
 }
 
+// === jitter and probability options ===
+
+TEST(Config, JitterDefaultsToZero) {
+    auto output = parse_args({"--frequency=100", "--command=echo hi"});
+    EXPECT_EQ(output.result, ParseResult::OK);
+    EXPECT_EQ(output.config.jitter_ms, 0);
+    EXPECT_EQ(output.config.jitter_distribution, "uniform");
+    EXPECT_DOUBLE_EQ(output.config.fire_probability, 1.0);
+}
+
+TEST(Config, JitterParsedForRun) {
+    auto output = parse_args({"run", "--frequency=5000", "--command=echo hi", "--jitter=2000"});
+    EXPECT_EQ(output.result, ParseResult::OK);
+    EXPECT_EQ(output.config.jitter_ms, 2000);
+}
+
+TEST(Config, JitterDistributionNormal) {
+    auto output = parse_args({"run", "--frequency=5000", "--command=echo hi", "--jitter=1000", "--jitter-distribution=normal"});
+    EXPECT_EQ(output.result, ParseResult::OK);
+    EXPECT_EQ(output.config.jitter_distribution, "normal");
+}
+
+TEST(Config, FireProbabilityParsedForRun) {
+    auto output = parse_args({"run", "--frequency=1000", "--command=echo hi", "--fire-probability=0.4"});
+    EXPECT_EQ(output.result, ParseResult::OK);
+    EXPECT_DOUBLE_EQ(output.config.fire_probability, 0.4);
+}
+
+TEST(Config, JitterParsedForInstall) {
+    auto output = parse_args({"install", "myservice", "--frequency=5000", "--command=echo hi", "--jitter=2000", "--jitter-distribution=normal"});
+    EXPECT_EQ(output.result, ParseResult::OK);
+    EXPECT_EQ(output.config.jitter_ms, 2000);
+    EXPECT_EQ(output.config.jitter_distribution, "normal");
+}
+
+TEST(Config, FireProbabilityParsedForInstall) {
+    auto output = parse_args({"install", "myservice", "--frequency=1000", "--command=echo hi", "--fire-probability=0.5"});
+    EXPECT_EQ(output.result, ParseResult::OK);
+    EXPECT_DOUBLE_EQ(output.config.fire_probability, 0.5);
+}
+
+TEST(Config, AllVarianceOptionsCombined) {
+    auto output = parse_args({"run", "--frequency=300000", "--command=echo hi", "--jitter=120000", "--jitter-distribution=uniform", "--fire-probability=0.8"});
+    EXPECT_EQ(output.result, ParseResult::OK);
+    EXPECT_EQ(output.config.jitter_ms, 120000);
+    EXPECT_EQ(output.config.jitter_distribution, "uniform");
+    EXPECT_DOUBLE_EQ(output.config.fire_probability, 0.8);
+}
+
 // === unknown subcommand ===
 
 TEST(Config, UnknownSubcommand) {

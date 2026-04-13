@@ -26,6 +26,9 @@ static po::options_description make_run_options(){
         ( "pid-file", po::value<std::string>(), "The file that this daemon will write the process ID to." )
         ( "synchronous", po::value<std::string>()->implicit_value("true"), "Whether calling the command blocks subsequent calls. Defaults to true." )
         ( "data-dir", po::value<std::string>(), "Override the data directory path." )
+        ( "jitter", po::value<int>(), "Maximum timing variance in milliseconds. The actual interval is frequency +/- jitter." )
+        ( "jitter-distribution", po::value<std::string>(), "Distribution for jitter: 'uniform' or 'normal'. Defaults to 'uniform'." )
+        ( "fire-probability", po::value<double>(), "Probability of firing on each tick (0.0-1.0). Defaults to 1.0." )
     ;
     return desc;
 }
@@ -38,6 +41,9 @@ static po::options_description make_install_options(){
         ( "command", po::value<std::string>(), "The shell command that the cron will run every frequency." )
         ( "synchronous", po::value<std::string>()->implicit_value("true"), "Whether calling the command blocks subsequent calls. Defaults to true." )
         ( "data-dir", po::value<std::string>(), "Override the data directory path." )
+        ( "jitter", po::value<int>(), "Maximum timing variance in milliseconds. The actual interval is frequency +/- jitter." )
+        ( "jitter-distribution", po::value<std::string>(), "Distribution for jitter: 'uniform' or 'normal'. Defaults to 'uniform'." )
+        ( "fire-probability", po::value<double>(), "Probability of firing on each tick (0.0-1.0). Defaults to 1.0." )
     ;
     return desc;
 }
@@ -60,6 +66,15 @@ static void parse_common_options( const po::variables_map& vm, Config& config ){
         if( val != "true" && val != "True" && val != "TRUE" && val != "1" ){
             config.synchronous = false;
         }
+    }
+    if( vm.count("jitter") ){
+        config.jitter_ms = vm["jitter"].as<int>();
+    }
+    if( vm.count("jitter-distribution") ){
+        config.jitter_distribution = vm["jitter-distribution"].as<std::string>();
+    }
+    if( vm.count("fire-probability") ){
+        config.fire_probability = vm["fire-probability"].as<double>();
     }
 }
 

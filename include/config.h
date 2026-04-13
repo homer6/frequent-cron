@@ -26,6 +26,9 @@ struct Config {
     std::string data_dir;
     int log_max_size_mb = 10;
     int log_max_files = 5;
+    int jitter_ms = 0;
+    std::string jitter_distribution = "uniform";  // "uniform" or "normal"
+    double fire_probability = 1.0;
 };
 
 enum class ParseResult {

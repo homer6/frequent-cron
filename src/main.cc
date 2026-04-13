@@ -23,7 +23,8 @@ static int cmd_run( const Config& config ){
         std::cout << "PID File was set to " << config.pid_filename << ".\n";
     }
 
-    Executor executor( config.command, config.frequency, config.synchronous );
+    Executor executor( config.command, config.frequency, config.synchronous,
+                       config.jitter_ms, config.jitter_distribution, config.fire_probability );
 
     if( !daemonize() ){
         std::cerr << "frequent-cron: failed to daemonize.\n";
