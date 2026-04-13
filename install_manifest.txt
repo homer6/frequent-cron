@@ -1,4 +1,5 @@
 /usr/local/bin/frequent-cron
+/usr/local/share/man/man1/frequent-cron.1
 /usr/local/include/gmock/gmock-matchers.h
 /usr/local/include/gmock/gmock-more-actions.h
 /usr/local/include/gmock/internal/gmock-port.h
