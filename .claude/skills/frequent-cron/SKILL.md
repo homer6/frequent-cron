@@ -10,80 +10,74 @@ frequent-cron is a daemon and service manager that runs shell commands at millis
 ## Quick Start
 
 ```bash
-# Install and run a service
 frequent-cron install myservice --frequency=1000 --command="/path/to/script.sh"
 frequent-cron start myservice
 frequent-cron status
 frequent-cron logs myservice
 frequent-cron stop myservice
 frequent-cron remove myservice
-
-# Direct execution (one-off, no service registration)
-frequent-cron run --frequency=500 --command="echo tick" --pid-file=/tmp/fc.pid
 ```
 
 ## Command Reference
 
-### run -- Direct Execution
+### install -- Register a Named Service
 ```bash
-frequent-cron run --frequency=<ms> --command=<cmd> [options]
+frequent-cron install <name> --frequency=<ms> --command=<cmd> [options]
 ```
-Daemonizes on POSIX, runs foreground on Windows. Returns immediately after fork.
+Creates a database entry and a platform-native service definition (systemd unit, launchd plist, rc.d script, or Windows SCM entry). The service is registered but not started.
 
 **Required:**
 - `--frequency=<ms>` -- Interval in milliseconds (min 1ms, practical min ~100ms)
 - `--command=<cmd>` -- Shell command (runs via `/bin/sh -c` on POSIX, `cmd /c` on Windows)
 
 **Optional:**
-- `--pid-file=<path>` -- Write daemon PID for lifecycle management
 - `--synchronous=<bool>` -- Wait for command to finish before next tick (default: true)
 - `--data-dir=<path>` -- Override platform data directory
 - `--jitter=<ms>` -- Max timing variance around frequency
 - `--jitter-distribution=<mode>` -- "uniform" (default) or "normal"
 - `--fire-probability=<0.0-1.0>` -- Chance of firing each tick (default: 1.0)
-- `--service-name=<name>` -- Name for log capture (set automatically by `start`)
 
-**Legacy mode** (backward compat): omit `run` keyword:
-```bash
-frequent-cron --frequency=500 --command="echo hi"
-```
-
-### install -- Register a Named Service
-```bash
-frequent-cron install <name> --frequency=<ms> --command=<cmd> [options]
-```
-Creates database entry + platform-native service definition (systemd unit, launchd plist, rc.d script, or Windows SCM entry). All `run` options apply.
-
-### start / stop
+### start -- Start a Registered Service
 ```bash
 frequent-cron start <name> [--data-dir=<path>]
+```
+Launches the service in the background using stored config. Daemonizes on POSIX (fork + setsid), runs foreground on Windows. Writes PID file and updates database state.
+
+### stop -- Stop a Running Service
+```bash
 frequent-cron stop <name> [--data-dir=<path>]
 ```
-Start launches `frequent-cron run` in background with stored config. Stop sends SIGTERM (POSIX) or TerminateProcess (Windows), waits up to 2s.
+Sends SIGTERM (POSIX) or TerminateProcess (Windows), waits up to 2s for exit. Updates database state, removes PID file. Detects and handles stale PIDs automatically.
 
-### status
+### status -- Check Service Status
 ```bash
 frequent-cron status [name] [--data-dir=<path>]
 ```
-Without name: table of all services (NAME, STATUS, PID, FREQ, COMMAND). With name: detailed view including jitter, fire probability, timestamps. Live-verifies PIDs and auto-corrects stale entries.
+Without name: table of all services (NAME, STATUS, PID, FREQ, COMMAND). With name: detailed view including jitter, fire probability, and timestamps. Live-verifies PIDs and auto-corrects stale entries.
 
-### list
+### list -- List All Services
 ```bash
 frequent-cron list [--data-dir=<path>]
 ```
 Table of all registered services: NAME, STATUS, FREQ(ms), COMMAND.
 
-### logs
+### logs -- View Service Output
 ```bash
 frequent-cron logs <name> [--data-dir=<path>]
 ```
 Last 100 lines of `<data_dir>/logs/<name>.log`. Each line timestamped `[YYYY-MM-DD HH:MM:SS]`. For live tailing, use the log file path directly with `tail -f`.
 
-### remove
+### remove -- Unregister a Service
 ```bash
 frequent-cron remove <name> [--data-dir=<path>]
 ```
 Stops service if running, removes platform service definition, deletes database record, PID file, and all log files (including rotated copies).
+
+### run -- Direct Execution (Deprecated/Legacy)
+```bash
+frequent-cron run --frequency=<ms> --command=<cmd> [options]
+```
+**Deprecated/Legacy.** Runs a command at the specified frequency without registering it as a service. Use `install` + `start` instead. Accepts all `install` options plus `--pid-file=<path>` and `--service-name=<name>`.
 
 ## Execution Modes
 
@@ -156,8 +150,8 @@ For detailed platform service files, paths, and native commands, see [reference.
 
 ### Service won't start
 1. Verify it exists: `frequent-cron list`
-2. Test command directly: `frequent-cron run --frequency=1000 --command="your command"`
-3. Check logs: `frequent-cron logs <name>`
+2. Check logs: `frequent-cron logs <name>`
+3. Test command in isolation: `frequent-cron run --frequency=1000 --command="your command"`
 4. Check platform service: `systemctl status frequent-cron-<name>` (Linux) / `launchctl list | grep frequent-cron` (macOS)
 5. Check permissions on binary, paths, and data directory
 
@@ -197,15 +191,26 @@ Requires: CMake 3.14+, C++23 compiler, Boost 1.37+ (asio, program_options), SQLi
 ```bash
 # Health check poller
 frequent-cron install health --frequency=500 --command="curl -sf http://localhost/health || alert.sh"
+frequent-cron start health
 
 # Jittered multi-instance (prevent thundering herd)
 frequent-cron install poller --frequency=5000 --command="/opt/poll.sh" --jitter=2000
+frequent-cron start poller
 
 # Chaos engineering
 frequent-cron install chaos --frequency=100 --command="/opt/inject-fault.sh" \
   --synchronous=false --fire-probability=0.3
+frequent-cron start chaos
 
 # Isolated test environment
 frequent-cron install test-svc --frequency=1000 --command="echo test" --data-dir=/tmp/fc-test
 frequent-cron start test-svc --data-dir=/tmp/fc-test
+
+# Full lifecycle
+frequent-cron install myservice --frequency=500 --command="/opt/run.sh"
+frequent-cron start myservice
+frequent-cron status myservice
+frequent-cron logs myservice
+frequent-cron stop myservice
+frequent-cron remove myservice
 ```
