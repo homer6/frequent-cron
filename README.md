@@ -82,6 +82,23 @@ frequent-cron stop myservice
 frequent-cron remove myservice
 ```
 
+### Jitter and Probabilistic Firing
+
+Add timing variance to spread load across services, or skip a percentage of ticks:
+
+```bash
+# Add up to 500ms of random jitter to each 1-second interval
+frequent-cron run --frequency=1000 --command="echo tick" --jitter=500
+
+# Use a normal distribution for jitter instead of uniform
+frequent-cron install myservice --frequency=1000 --command="/path/to/script.sh" --jitter=200 --jitter-distribution=normal
+
+# Fire only 40% of ticks (skip ~60% at random)
+frequent-cron run --frequency=500 --command="echo tick" --fire-probability=0.4
+```
+
+Both options are off by default and work with all subcommands (`run`, `install`).
+
 The `install` command also creates platform-native service definitions:
 - **Linux**: systemd unit files
 - **macOS**: launchd plists
@@ -96,6 +113,9 @@ The `install` command also creates platform-native service definitions:
 | `--command` | Shell command to execute |
 | `--pid-file` | Path to write the daemon's PID (optional) |
 | `--synchronous` | Set to `false` for async execution (default: `true`) |
+| `--jitter` | Random variance in milliseconds added to each interval (default: `0`) |
+| `--jitter-distribution` | Distribution for jitter: `uniform` or `normal` (default: `uniform`) |
+| `--fire-probability` | Probability (0.0–1.0) of firing on each tick (default: `1.0`) |
 | `--data-dir` | Override the data directory path |
 | `--help` | Display help |
 

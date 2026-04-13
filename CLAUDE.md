@@ -23,8 +23,8 @@ sudo make install
 Modular C++ with static library (`frequent-cron_lib`) and thin `main.cc`:
 
 ### Core Modules (`include/` + `src/`)
-- **`config.h/cc`** -- Subcommand enum + `parse_args()`. Supports: `run`, `install`, `remove`, `start`, `stop`, `status`, `list`, `logs`, and legacy mode (backward compat)
-- **`executor.h/cc`** -- `Executor` class: Boost ASIO `io_context` + `steady_timer` event loop. Optional `OutputCallback` for log capture (uses `run_process()` when set, `system()` when not)
+- **`config.h/cc`** -- Subcommand enum + `parse_args()`. Supports: `run`, `install`, `remove`, `start`, `stop`, `status`, `list`, `logs`, and legacy mode (backward compat). Flags include `--jitter`, `--jitter-distribution`, and `--fire-probability`
+- **`executor.h/cc`** -- `Executor` class: Boost ASIO `io_context` + `steady_timer` event loop. Optional `OutputCallback` for log capture (uses `run_process()` when set, `system()` when not). Supports jitter (uniform/normal distribution) and probabilistic firing
 - **`process_runner.h`** / **`process.cc`** -- `run_process()`: cross-platform command execution with stdout/stderr capture via `popen`
 - **`database.h/cc`** -- SQLite wrapper: `ServiceRecord` + `ServiceState` CRUD with WAL mode
 - **`service_registry.h/cc`** -- High-level subcommand handlers: install/remove/start/stop/status/list/logs
@@ -75,7 +75,7 @@ make test    # runs all tests via CTest
 frequent-cron --frequency=1000 --command="/path/to/script.sh" --pid-file=/var/run/fc.pid
 
 # Service management
-frequent-cron install myservice --frequency=1000 --command="/path/to/script.sh"
+frequent-cron install myservice --frequency=1000 --command="/path/to/script.sh" [--jitter=<ms>] [--jitter-distribution=<uniform|normal>] [--fire-probability=<0.0-1.0>]
 frequent-cron start myservice
 frequent-cron status
 frequent-cron logs myservice
